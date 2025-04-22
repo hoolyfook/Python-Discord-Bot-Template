@@ -1,11 +1,3 @@
-"""
-Copyright © Krypton 2019-Present - https://github.com/kkrypt0nn (https://krypton.ninja)
-Description:
-🐍 A simple template to start to code your own and personalized Discord bot in Python
-
-Version: 6.3.0
-"""
-
 import os
 from datetime import datetime
 
@@ -59,11 +51,11 @@ class Moderation(commands.Cog, name="moderation"):
                     await member.send(
                         f"You were kicked by **{context.author}** from **{context.guild.name}**!\nReason: {reason}"
                     )
-                except:
+                except Exception:
                     # Couldn't send a message in the private messages of the user
                     pass
                 await member.kick(reason=reason)
-            except:
+            except Exception:
                 embed = discord.Embed(
                     description="An error occurred while trying to kick the user. Make sure my role is above the role of the user you want to kick.",
                     color=0xE02B2B,
@@ -100,7 +92,7 @@ class Moderation(commands.Cog, name="moderation"):
                 color=0xBEBEFE,
             )
             await context.send(embed=embed)
-        except:
+        except Exception:
             embed = discord.Embed(
                 description="An error occurred while trying to change the nickname of the user. Make sure my role is above the role of the user you want to change the nickname.",
                 color=0xE02B2B,
@@ -147,11 +139,11 @@ class Moderation(commands.Cog, name="moderation"):
                     await member.send(
                         f"You were banned by **{context.author}** from **{context.guild.name}**!\nReason: {reason}"
                     )
-                except:
+                except Exception:
                     # Couldn't send a message in the private messages of the user
                     pass
                 await member.ban(reason=reason)
-        except:
+        except Exception:
             embed = discord.Embed(
                 title="Error!",
                 description="An error occurred while trying to ban the user. Make sure my role is above the role of the user you want to ban.",
@@ -212,7 +204,7 @@ class Moderation(commands.Cog, name="moderation"):
             await member.send(
                 f"You were warned by **{context.author}** in **{context.guild.name}**!\nReason: {reason}"
             )
-        except:
+        except Exception:
             # Couldn't send a message in the private messages of the user
             await context.send(
                 f"{member.mention}, you were warned by **{context.author}**!\nReason: {reason}"

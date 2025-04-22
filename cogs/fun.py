@@ -8,7 +8,6 @@ Version: 6.3.0
 
 import random
 
-import aiohttp
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
@@ -97,29 +96,6 @@ class Fun(commands.Cog, name="fun"):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="randomfact", description="Get a random fact.")
-    async def randomfact(self, context: Context) -> None:
-        """
-        Get a random fact.
-
-        :param context: The hybrid command context.
-        """
-        # This will prevent your bot from stopping everything when doing a web request - see: https://discordpy.readthedocs.io/en/stable/faq.html#how-do-i-make-a-web-request
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                "https://uselessfacts.jsph.pl/random.json?language=en"
-            ) as request:
-                if request.status == 200:
-                    data = await request.json()
-                    embed = discord.Embed(description=data["text"], color=0xD75BF4)
-                else:
-                    embed = discord.Embed(
-                        title="Error!",
-                        description="There is something wrong with the API, please try again later",
-                        color=0xE02B2B,
-                    )
-                await context.send(embed=embed)
-
     @commands.hybrid_command(
         name="coinflip", description="Make a coin flip, but give your bet before."
     )
@@ -145,18 +121,6 @@ class Fun(commands.Cog, name="fun"):
                 color=0xE02B2B,
             )
         await message.edit(embed=embed, view=None, content=None)
-
-    @commands.hybrid_command(
-        name="rps", description="Play the rock paper scissors game against the bot."
-    )
-    async def rock_paper_scissors(self, context: Context) -> None:
-        """
-        Play the rock paper scissors game against the bot.
-
-        :param context: The hybrid command context.
-        """
-        view = RockPaperScissorsView()
-        await context.send("Please make your choice", view=view)
 
 
 async def setup(bot) -> None:
