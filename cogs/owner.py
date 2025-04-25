@@ -209,4 +209,5 @@ class Owner(commands.Cog, name="owner"):
 
 
 async def setup(bot) -> None:
-    await bot.add_cog(Owner(bot))
+    pass
+    # await bot.add_cog(Owner(bot))

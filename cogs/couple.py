@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord.ext.commands import Context
 
-class Template(commands.Cog, name="couple"):
+class Couple(commands.Cog, name="couple"):
     def __init__(self, bot) -> None:
         self.bot = bot
         
@@ -18,4 +18,4 @@ class Template(commands.Cog, name="couple"):
         pass
 
 async def setup(bot) -> None:
-    await bot.add_cog(Template(bot))
+    await bot.add_cog(Couple(bot))

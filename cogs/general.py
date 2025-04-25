@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import Embed, Member
-
+import aiosqlite
 class General(commands.Cog, name="general"):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -79,30 +79,6 @@ class General(commands.Cog, name="general"):
         await context.send(embed=embed)
 
     @commands.hybrid_command(
-        name="botinfo",
-        description="Get some useful (or not) information about the bot.",
-    )
-    async def botinfo(self, context: Context) -> None:
-        """
-        Get some useful (or not) information about the bot.
-
-        :param context: The hybrid command context.
-        """
-        embed = discord.Embed(
-            description="Dev by s1mpex",
-            color=0xBEBEFE,
-        )
-        embed.set_author(name="Bot Information")
-        embed.add_field(name="Owner:", value="s1mpex", inline=True)
-        embed.add_field(
-            name="Prefix:",
-            value=f"{self.bot.bot_prefix} for normal commands",
-            inline=False,
-        )
-        embed.set_footer(text=f"Requested by {context.author}")
-        await context.send(embed=embed)
-
-    @commands.hybrid_command(
         name="serverinfo",
         description="Get some useful (or not) information about the server.",
     )
@@ -149,26 +125,6 @@ class General(commands.Cog, name="general"):
         )
         await context.send(embed=embed)
 
-    @commands.hybrid_command(
-        name="invite",
-        description="Get the invite link of the bot to be able to invite it.",
-    )
-    async def invite(self, context: Context) -> None:
-        """
-        Get the invite link of the bot to be able to invite it.
-
-        :param context: The hybrid command context.
-        """
-        embed = discord.Embed(
-            description=f"Invite me by clicking [here]({self.bot.invite_link}).",
-            color=0xD75BF4,
-        )
-        try:
-            await context.author.send(embed=embed)
-            await context.send("I sent you a private message!")
-        except discord.Forbidden:
-            await context.send(embed=embed)
-
     def determine_cultivation_stage(self, created_at):
             """Trả về tu vi dựa vào tuổi tài khoản."""
             from datetime import datetime, timezone
@@ -191,13 +147,23 @@ class General(commands.Cog, name="general"):
     )
     async def get_user_profile(self, context: Context, member: Member = None) -> None:
         member = member or context.author
+        user_id = str(member.id)
 
-        tu_vi = self.determine_cultivation_stage(member.created_at)
+        # Đảm bảo người dùng có trong database
+        await self.ensure_user(user_id, member.name)
+
+        # Lấy số dư từ database
+        async with aiosqlite.connect("database/database.db") as db:
+            async with db.execute("SELECT balance FROM users WHERE user_id = ?", (user_id,)) as cursor:
+                row = await cursor.fetchone()
+                balance = row[0] if row else 0
+
+        tu_vi = self.determine_cultivation_stage(balance)
 
         embed = Embed(
             title=f"🏯 Hồ sơ Giang Hồ: {member.display_name}",
             color=0x8B0000,
-            description=f"**Tu vi:** {tu_vi}"
+            description=f"**Tu vi:** {tu_vi} | 💰 {balance} YCoin"
         )
 
         avatar_url = member.avatar.url if member.avatar else member.default_avatar.url
@@ -210,13 +176,14 @@ class General(commands.Cog, name="general"):
             inline=True
         )
         embed.add_field(name="🎖 Chức vụ", value=member.top_role.mention, inline=True)
-        # Tâm pháp (bio)
+
         try:
             user = await context.bot.fetch_user(member.id)
             if hasattr(user, "bio") and user.bio:
                 embed.add_field(name="📖 Tâm pháp", value=user.bio, inline=False)
         except Exception:
             pass
+
         await context.send(embed=embed)
 
 async def setup(bot) -> None:
