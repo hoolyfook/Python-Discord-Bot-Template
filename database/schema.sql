@@ -6,3 +6,9 @@ CREATE TABLE IF NOT EXISTS `warns` (
   `reason` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id TEXT PRIMARY KEY,
+    balance INTEGER NOT NULL DEFAULT 0,
+    last_daily TEXT
+);
