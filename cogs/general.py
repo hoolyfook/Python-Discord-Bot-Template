@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
+from discord import Embed, Member
 
 class General(commands.Cog, name="general"):
     def __init__(self, bot) -> None:
@@ -167,6 +168,56 @@ class General(commands.Cog, name="general"):
             await context.send("I sent you a private message!")
         except discord.Forbidden:
             await context.send(embed=embed)
+
+    def determine_cultivation_stage(self, created_at):
+            """Trả về tu vi dựa vào tuổi tài khoản."""
+            from datetime import datetime, timezone
+            age_days = (datetime.now(timezone.utc) - created_at).days
+
+            if age_days < 30:
+                return "Tân thủ nhập môn"
+            elif age_days < 180:
+                return "Luyện khí sơ kỳ"
+            elif age_days < 365:
+                return "Trúc cơ trung kỳ"
+            elif age_days < 730:
+                return "Kim đan hậu kỳ"
+            else:
+                return "Nguyên anh đại viên mãn"
+
+    @commands.hybrid_command(
+        name="hoso",
+        description="Tra hồ sơ giang hồ của một người",
+    )
+    async def get_user_profile(self, context: Context, member: Member = None) -> None:
+        member = member or context.author
+
+        tu_vi = self.determine_cultivation_stage(member.created_at)
+
+        embed = Embed(
+            title=f"🏯 Hồ sơ Giang Hồ: {member.display_name}",
+            color=0x8B0000,
+            description=f"**Tu vi:** {tu_vi}"
+        )
+
+        avatar_url = member.avatar.url if member.avatar else member.default_avatar.url
+        embed.set_thumbnail(url=avatar_url)
+
+        embed.add_field(name="🧙 Đạo hiệu", value=str(member), inline=True)
+        embed.add_field(
+            name="📜 Gia nhập môn phái",
+            value=member.joined_at.strftime("%d-%m-%Y") if member.joined_at else "Không rõ",
+            inline=True
+        )
+        embed.add_field(name="🎖 Chức vụ", value=member.top_role.mention, inline=True)
+        # Tâm pháp (bio)
+        try:
+            user = await context.bot.fetch_user(member.id)
+            if hasattr(user, "bio") and user.bio:
+                embed.add_field(name="📖 Tâm pháp", value=user.bio, inline=False)
+        except Exception:
+            pass
+        await context.send(embed=embed)
 
 async def setup(bot) -> None:
     await bot.add_cog(General(bot))

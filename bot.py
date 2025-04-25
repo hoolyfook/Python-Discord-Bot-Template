@@ -233,6 +233,5 @@ class DiscordBot(commands.Bot):
         else:
             raise error
 
-
 bot = DiscordBot()
 bot.run(os.getenv("TOKEN"))
