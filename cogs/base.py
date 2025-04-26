@@ -27,8 +27,6 @@ class BaseCog(commands.Cog):
             await ctx.send("⚠️ Bạn đang thiếu một hoặc nhiều đối số. Hãy kiểm tra lại lệnh của mình.")
         elif isinstance(error, commands.BadArgument):
             await ctx.send("⚠️ Đối số bạn nhập không hợp lệ.")
-        elif isinstance(error, commands.CommandInvokeError):
-            await ctx.send("❌ Có lỗi xảy ra khi thực thi lệnh.")
         else:
             await ctx.send("⚠️ Lỗi không xác định đã xảy ra.")
     

@@ -113,13 +113,19 @@ class DiscordBot(commands.Bot):
                     self.logger.error(
                         f"Failed to load extension {extension}\n{exception}"
                     )
+        # Sync commands after loading all cogs
+        try:
+            synced = await self.tree.sync()
+            self.logger.info(f"Synced {len(synced)} command(s)")
+        except Exception as e:
+            self.logger.error(f"Failed to sync commands: {e}")
 
     @tasks.loop(minutes=1.0)
     async def status_task(self) -> None:
         """
         Setup the game status task of the bot.
         """
-        statuses = ["with you!"]
+        statuses = ["with you!", "SpiritStone Bot", "Tu Luyện"]
         await self.change_presence(activity=discord.Game(random.choice(statuses)))
 
     @status_task.before_loop
@@ -233,6 +239,19 @@ class DiscordBot(commands.Bot):
             await context.send(embed=embed)
         else:
             raise error
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        """
+        The code in this event is executed when the bot is ready.
+        """
+        self.logger.info(f"Logged in as {self.user.name}")
+        self.logger.info(f"discord.py API version: {discord.__version__}")
+        self.logger.info(f"Python version: {platform.python_version()}")
+        self.logger.info(f"Running on: {platform.system()} {platform.release()} ({os.name})")
+        self.logger.info("-------------------")
+        await self.tree.sync()
+        self.logger.info("Synced slash commands")
 
 bot = DiscordBot()
 bot.run(os.getenv("TOKEN"))
