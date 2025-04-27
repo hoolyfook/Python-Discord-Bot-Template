@@ -221,6 +221,49 @@ class General(commands.Cog, name="general"):
         embed.add_field(name=f"Vai trò ({len(context.guild.roles)})", value=roles)
         await context.send(embed=embed)
 
+    @commands.hybrid_command(
+        name="tiemlongbang",
+        aliases=["tlb","bxh","bangxephang","cuonggia"],
+        description="Hiển thị bảng xếp hạng top 10 người mạnh nhất dựa theo cảnh giới"
+    )
+    async def tiemlongbang(self, context: Context) -> None:
+        """
+        Hiển thị bảng xếp hạng top 10 người mạnh nhất dựa theo cảnh giới
+        """
+        # Lấy top 10 người dùng có cảnh giới cao nhất
+        top_users = await mongodb.get_top_users(10)
+        
+        if not top_users:
+            embed = discord.Embed(
+                title="Tiềm Long Bảng",
+                description="Chưa có dữ liệu xếp hạng!",
+                color=0xFF4500
+            )
+            embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            await context.send(embed=embed)
+            return
+
+        embed = discord.Embed(
+            title="🏆 Tiềm Long Bảng",
+            description="Top 10 người mạnh nhất dựa theo cảnh giới",
+            color=0xFFD700
+        )
+
+        for i, user in enumerate(top_users, 1):
+            user_info = self.get_cultivation_info(user["cultivation_level"])
+            level_name = user_info["level_name"]
+            tho_nguyen = user_info["tho_nguyen"]
+            
+            # Thêm thông tin người dùng vào embed
+            embed.add_field(
+                name=f"{i}. {user['username']}",
+                value=f"**Cảnh Giới:** {level_name}\n**Thọ Nguyên:** {tho_nguyen}\n**Tu Vi:** {user['cultivation_points']:,} điểm",
+                inline=False
+            )
+
+        embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        await context.send(embed=embed)
+
     async def ensure_user(self, user_id: str, username: str = None) -> None:
         """Đảm bảo người dùng tồn tại trong database"""
         try:

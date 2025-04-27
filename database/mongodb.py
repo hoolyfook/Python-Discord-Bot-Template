@@ -43,7 +43,7 @@ class MongoDB:
     async def get_top_users(self, limit: int = 10):
         cursor = self.db.users.find().sort([
             ("cultivation_level", -1),
-            ("spirit_stones", -1)
+            ("cultivation_points", -1)
         ]).limit(limit)
         return await cursor.to_list(length=limit)
     
