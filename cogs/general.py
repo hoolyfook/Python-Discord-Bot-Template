@@ -18,108 +18,26 @@ class General(commands.Cog, name="general"):
             name="Remove spoilers", callback=self.remove_spoilers
         )
         self.bot.tree.add_command(self.context_menu_message)
-        self.cultivation_levels = {
-            "Luyện Khí": {
-                "levels": {
-                    "Sơ Kỳ": 0,
-                    "Trung Kỳ": 1,
-                    "Hậu Kỳ": 2,
-                    "Đại Viên Mãn": 3
-                },
-                "description": "Giai đoạn đầu của tu luyện, luyện khí thành linh lực",
-                "color": 0x00FF00
-            },
-            "Trúc Cơ": {
-                "levels": {
-                    "Sơ Kỳ": 4,
-                    "Trung Kỳ": 5,
-                    "Hậu Kỳ": 6,
-                    "Đại Viên Mãn": 7
-                },
-                "description": "Xây dựng nền tảng tu luyện vững chắc",
-                "color": 0x00FFFF
-            },
-            "Kim Đan": {
-                "levels": {
-                    "Sơ Kỳ": 8,
-                    "Trung Kỳ": 9,
-                    "Hậu Kỳ": 10,
-                    "Đại Viên Mãn": 11
-                },
-                "description": "Kết tinh linh lực thành kim đan",
-                "color": 0xFFD700
-            },
-            "Nguyên Anh": {
-                "levels": {
-                    "Sơ Kỳ": 12,
-                    "Trung Kỳ": 13,
-                    "Hậu Kỳ": 14,
-                    "Đại Viên Mãn": 15
-                },
-                "description": "Nuôi dưỡng nguyên thần, hình thành nguyên anh",
-                "color": 0xFF4500
-            },
-            "Hóa Thần": {
-                "levels": {
-                    "Sơ Kỳ": 16,
-                    "Trung Kỳ": 17,
-                    "Hậu Kỳ": 18,
-                    "Đại Viên Mãn": 19
-                },
-                "description": "Hóa thần thành tiên, đạt đến cảnh giới cao hơn",
-                "color": 0x9932CC
-            },
-            "Luyện Hư": {
-                "levels": {
-                    "Sơ Kỳ": 20,
-                    "Trung Kỳ": 21,
-                    "Hậu Kỳ": 22,
-                    "Đại Viên Mãn": 23
-                },
-                "description": "Luyện hư thành thực, đạt đến cảnh giới tiên nhân",
-                "color": 0x4169E1
-            },
-            "Hợp Thể": {
-                "levels": {
-                    "Sơ Kỳ": 24,
-                    "Trung Kỳ": 25,
-                    "Hậu Kỳ": 26,
-                    "Đại Viên Mãn": 27
-                },
-                "description": "Hợp nhất với thiên địa, đạt đến cảnh giới đại năng",
-                "color": 0xFF0000
-            },
-            "Đại Thừa": {
-                "levels": {
-                    "Sơ Kỳ": 28,
-                    "Trung Kỳ": 29,
-                    "Hậu Kỳ": 30,
-                    "Đại Viên Mãn": 31
-                },
-                "description": "Đạt đến cảnh giới tối cao, một bước thành tiên",
-                "color": 0xFFFFFF
-            },
-            "Bán Đế": {
-                "levels": {
-                    "Sơ Kỳ": 32,
-                    "Trung Kỳ": 33,
-                    "Hậu Kỳ": 34,
-                    "Đại Viên Mãn": 35
-                },
-                "description": "Đạt đến cảnh giới bán đế, một chân đã bước vào thế giới đế giới",
-                "color": 0xFF00FF
-            },
-            "Đại Đế": {
-                "levels": {
-                    "Sơ Kỳ": 36,
-                    "Trung Kỳ": 37,
-                    "Hậu Kỳ": 38,
-                    "Đại Viên Mãn": 39
-                },
-                "description": "Đạt đến cảnh giới đại đế, chân chính bước vào thế giới đế giới",
-                "color": 0x000000
-            }
-        }
+        self.cultivation_levels = [
+            # (Tên, [Các kỳ nhỏ/tầng], Thọ nguyên, Màu sắc, Mô tả)
+            ("Phàm Nhân", [], "70-100", 0xAAAAAA, "Người thường, chưa tu luyện."),
+            ("Luyện Khí", [f"{i} tầng" for i in range(1, 10)], "120-150", 0xCCCCCC, "Bước đầu hấp thu linh khí."),
+            ("Trúc Cơ", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "200-300", 0x00FF00, "Xây dựng nền tảng tu luyện."),
+            ("Kim Đan", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "500-800", 0xFFD700, "Kết tinh linh lực thành kim đan."),
+            ("Nguyên Anh", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "1000-1500", 0xFF4500, "Ngưng tụ nguyên anh."),
+            ("Hóa Thần", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "2000-3000", 0x9932CC, "Hóa thần thành tiên."),
+            ("Luyện Hư", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "4000-6000", 0x4169E1, "Luyện hư thành thực."),
+            ("Hợp Thể", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "8000-10000", 0xFF0000, "Hợp nhất với thiên địa."),
+            ("Đại Thừa", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "20000-30000", 0xFFFFFF, "Đạt đến cảnh giới tối cao."),
+            ("Phi Thăng", ["Qua Kiếp Độ"], "", 0x00FFFF, "Độ kiếp phi thăng."),
+            # Tiên Nhân trở lên
+            ("Chân Tiên", [], "Vô hạn", 0xFFD700, "Bước vào hàng ngũ tiên nhân."),
+            ("Huyền Tiên", [], "Vô hạn", 0xBEBEFE, "Cảnh giới cao hơn Chân Tiên."),
+            ("Kim Tiên", [], "Vô hạn", 0xFFD700, "Cảnh giới Kim Tiên."),
+            ("Thái Ất Chân Tiên", [], "Vô hạn", 0xFF00FF, "Cảnh giới Thái Ất Chân Tiên."),
+            ("Đại La Kim Tiên", [], "Vô hạn", 0x00FF00, "Cảnh giới Đại La Kim Tiên."),
+            ("Thánh Nhân", [], "Vô hạn", 0xFF0000, "Cảnh giới Thánh Nhân, tối thượng.")
+        ]
         self.level_requirements = [1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000]
 
     # Message context menu command
@@ -164,11 +82,15 @@ class General(commands.Cog, name="general"):
 
     @commands.hybrid_command(
         name="hoso",
+        aliases=["tuvi"],
         description="Xem hồ sơ tu luyện của bạn"
     )
-    async def hoso(self, ctx: Context) -> None:
-        user_id = str(ctx.author.id)
-        await self.ensure_user(user_id, username=ctx.author.name)
+    async def hoso(self, context: Context) -> None:
+        """
+        Xem hồ sơ tu luyện của bạn
+        """
+        user_id = str(context.author.id)
+        await self.ensure_user(user_id, username=context.author.name)
 
         user = await mongodb.get_user(user_id)
         if not user:
@@ -178,49 +100,83 @@ class General(commands.Cog, name="general"):
                 color=0xFF4500
             )
             embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            await ctx.send(embed=embed)
+            await context.send(embed=embed)
             return
 
-        level = user["cultivation_level"]
-        stones = user["spirit_stones"]
+        cultivation_level = user["cultivation_level"]
         cultivation_points = user["cultivation_points"]
-
-        # Lấy thông tin cảnh giới
-        realm, stage, color = self.get_cultivation_info(level)
+        info = self.get_cultivation_info(cultivation_level)
         
-        # Tạo thanh tiến trình tu vi
-        progress = "█" * (level % 4 + 1) + "░" * (3 - level % 4)
-
+        # Tính điểm cần thiết cho đột phá tiếp theo
+        next_level_points = self.get_points_needed(cultivation_level + 1)
+        
         embed = discord.Embed(
-            title=f"Hồ Sơ Tu Luyện - {ctx.author.name}",
-            description="Thông tin chi tiết về quá trình tu luyện của bạn",
-            color=color
+            title=f"Hồ Sơ Tu Luyện của {context.author.name}",
+            description=f"**Cảnh Giới:** {info['realm']} {info['sublevel']}\n**Mô Tả:** {info['desc']}",
+            color=info['color']
         )
         
+        # Thêm avatar nếu có
+        if context.author.avatar:
+            embed.set_thumbnail(url=context.author.avatar.url)
+        
+        # Thêm thông tin điểm tu vi
         embed.add_field(
-            name="Cảnh Giới",
-            value=f"**{realm} {stage}**\nTiến Trình: [{progress}]",
-            inline=False
+            name="Điểm Tu Vi",
+            value=f"**{cultivation_points:,}** điểm",
+            inline=True
         )
         
+        # Thêm thông tin đột phá tiếp theo
         embed.add_field(
-            name="Tài Nguyên",
-            value=f"**Linh Thạch:** {stones:,} 🪨\n**Điểm Tu Luyện:** {cultivation_points:,} ⭐",
-            inline=False
+            name="Đột Phá Tiếp Theo",
+            value=f"Cần **{next_level_points:,}** điểm tu vi",
+            inline=True
         )
         
-        embed.set_thumbnail(url=ctx.author.display_avatar.url)
+        # Thêm tỷ lệ thành công cho đột phá tiếp theo
+        success_rate = 100 - (cultivation_level * 5)
+        success_rate = max(10, success_rate)
+        embed.add_field(
+            name="Tỷ Lệ Thành Công",
+            value=f"**{success_rate}%**",
+            inline=True
+        )
+        
         embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        
-        await ctx.send(embed=embed)
+        await context.send(embed=embed)
 
-    def get_cultivation_info(self, level: int) -> tuple:
-        """Trả về thông tin về cảnh giới và giai đoạn tu luyện"""
-        for realm, info in self.cultivation_levels.items():
-            for stage, stage_level in info["levels"].items():
-                if level == stage_level:
-                    return realm, stage, info["color"]
-        return "Không xác định", "Không xác định", 0x000000
+    def get_cultivation_info(self, level: int):
+        # Tính tổng số bậc nhỏ cho từng cảnh giới
+        index = 0
+        for name, sublevels, tho_nguyen, color, desc in self.cultivation_levels:
+            num_sub = len(sublevels) if sublevels else 1
+            if level < index + num_sub:
+                sub = sublevels[level - index] if sublevels else ""
+                return {
+                    "realm": name,
+                    "sublevel": sub,
+                    "desc": desc,
+                    "color": color,
+                    "tho_nguyen": tho_nguyen,
+                    "level_name": f"{name} {sub}" if sub else name
+                }
+            index += num_sub
+        # Nếu vượt max, trả về cấp cuối cùng
+        name, sublevels, tho_nguyen, color, desc = self.cultivation_levels[-1]
+        return {
+            "realm": name,
+            "sublevel": "",
+            "desc": desc,
+            "color": color,
+            "tho_nguyen": tho_nguyen,
+            "level_name": name
+        }
+
+    def get_points_needed(self, level: int):
+        # Ví dụ: mỗi cấp cần nhiều hơn 15% so với cấp trước
+        base = 1000
+        return int(base * (1.15 ** level))
 
     @commands.hybrid_command(
         name="ping",

@@ -2,12 +2,16 @@ import logging
 import os
 import platform
 import random
+import asyncio
+from shutil import ExecError
 
 import aiosqlite
 import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
 from dotenv import load_dotenv
+import motor.motor_asyncio
+from database.mongodb import mongodb
 
 from database import DatabaseManager
 
@@ -17,6 +21,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 intents.guild_messages = True
+intents.members = True
 
 class LoggingFormatter(logging.Formatter):
     # Colors
@@ -86,17 +91,8 @@ class DiscordBot(commands.Bot):
         self.database = None
         self.bot_prefix = os.getenv("PREFIX")
         self.invite_link = os.getenv("INVITE_LINK")
-
-    async def init_db(self) -> None:
-        async with aiosqlite.connect(
-            f"{os.path.realpath(os.path.dirname(__file__))}/database/database.db"
-        ) as db:
-            with open(
-                f"{os.path.realpath(os.path.dirname(__file__))}/database/schema.sql",
-                encoding = "utf-8"
-            ) as file:
-                await db.executescript(file.read())
-            await db.commit()
+        self.worker_count = 4  # Số lượng worker mặc định
+        self.workers = []  # Danh sách các worker
 
     async def load_cogs(self) -> None:
         """
@@ -125,7 +121,7 @@ class DiscordBot(commands.Bot):
         """
         Setup the game status task of the bot.
         """
-        statuses = ["with you!", "SpiritStone Bot", "Tu Luyện"]
+        statuses = ["Thiên đạo n"]
         await self.change_presence(activity=discord.Game(random.choice(statuses)))
 
     @status_task.before_loop
@@ -147,7 +143,6 @@ class DiscordBot(commands.Bot):
             f"Running on: {platform.system()} {platform.release()} ({os.name})"
         )
         self.logger.info("-------------------")
-        await self.init_db()
         await self.load_cogs()
         self.status_task.start()
         self.database = DatabaseManager(
@@ -155,6 +150,7 @@ class DiscordBot(commands.Bot):
                 f"{os.path.realpath(os.path.dirname(__file__))}/database/database.db"
             )
         )
+        await self.start_workers()
 
     async def on_message(self, message: discord.Message) -> None:
         """
@@ -252,6 +248,68 @@ class DiscordBot(commands.Bot):
         self.logger.info("-------------------")
         await self.tree.sync()
         self.logger.info("Synced slash commands")
+        self.logger.info(f"Bot đã sẵn sàng với {self.worker_count} worker")
+        self.logger.info(f"Bot đang chạy với tên: {self.user.name}")
+        self.logger.info(f"Bot ID: {self.user.id}")
+
+    async def start_workers(self):
+        """Khởi động các worker"""
+        self.logger.info(f"Khởi động {self.worker_count} worker")
+        for i in range(self.worker_count):
+            worker = asyncio.create_task(self.worker_loop(i))
+            self.workers.append(worker)
+
+    async def worker_loop(self, worker_id: int):
+        """Vòng lặp xử lý của worker"""
+        self.logger.info(f"Worker {worker_id} đã khởi động")
+        try:
+            while True:
+                # Xử lý các task trong queue
+                await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            self.logger.info(f"Worker {worker_id} đã dừng")
+        except Exception as e:
+            self.logger.error(f"Lỗi trong worker {worker_id}: {str(e)}")
+
+    async def scale_workers(self, new_count: int):
+        """Scale số lượng worker"""
+        if new_count < 1 or new_count > 10:
+            raise ValueError("Số lượng worker phải từ 1 đến 10")
+
+        # Dừng các worker cũ
+        for worker in self.workers:
+            try:
+                await worker.cancel()
+            except Exception:
+                pass
+
+        self.workers = []
+        self.worker_count = new_count
+
+        # Khởi động worker mới
+        await self.start_workers()
+        self.logger.info(f"Đã scale lên {new_count} worker")
+
+    @commands.hybrid_command(
+        name="diemdanh",
+        description="Điểm danh hàng ngày để nhận Linh Thạch theo chức vụ"
+    )
+    @commands.cooldown(1, 86400, commands.BucketType.user)
+    async def diemdanh(self, ctx: Context) -> None:
+        if ctx.guild is None:
+            await ctx.send("❌ Lệnh này chỉ dùng được trong server, không dùng được trong DM!")
+            return
+        user_id = str(ctx.author.id)
+        guild_id = str(ctx.guild.id)
+        # ... phần còn lại giữ nguyên ...
 
 bot = DiscordBot()
+
+# Load biến môi trường
+load_dotenv()
+
+# Khởi tạo MongoDB client
+mongodb_client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGODB_URI"))
+mongodb.db = mongodb_client[os.getenv("MONGODB_DB")]
+
 bot.run(os.getenv("TOKEN"))

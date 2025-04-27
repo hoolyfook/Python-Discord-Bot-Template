@@ -8,17 +8,17 @@ class Help(commands.Cog, name="help"):
 
     @commands.hybrid_command(
         name="help",
-        description="Hiển thị danh sách tất cả các lệnh của bot."
+        description="Hiển thị danh sách các lệnh bạn có thể sử dụng"
     )
     async def help(self, context: Context) -> None:
         """
-        Hiển thị danh sách tất cả các lệnh của bot.
+        Hiển thị danh sách các lệnh bạn có thể sử dụng
         """
         try:
-            self.bot.logger.info("Starting help command")
+            self.bot.logger.info(f"Starting help command for user {context.author.name}")
             embed = discord.Embed(
                 title="📚 Danh sách lệnh",
-                description="Dưới đây là danh sách tất cả các lệnh có sẵn:",
+                description="Dưới đây là danh sách các lệnh bạn có thể sử dụng:",
                 color=0xBEBEFE
             )
             
@@ -52,6 +52,10 @@ class Help(commands.Cog, name="help"):
                 command_list = []
                 for command in commands:
                     try:
+                        # Kiểm tra quyền của người dùng
+                        if not await command.can_run(context):
+                            continue
+
                         # Lấy mô tả của lệnh
                         description = command.description or "Không có mô tả"
                         

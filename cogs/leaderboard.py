@@ -3,102 +3,32 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from datetime import datetime
 from database.mongodb import mongodb
+from discord.ext import app_commands
 
 class Leaderboard(commands.Cog, name="leaderboard"):
     def __init__(self, bot) -> None:
+        super().__init__(bot, register_context_menu=False)
         self.bot = bot
-        self.cultivation_levels = {
-            "Luyện Khí": {
-                "levels": {
-                    "Sơ Kỳ": 0,
-                    "Trung Kỳ": 1,
-                    "Hậu Kỳ": 2,
-                    "Đại Viên Mãn": 3
-                },
-                "color": 0x00FF00
-            },
-            "Trúc Cơ": {
-                "levels": {
-                    "Sơ Kỳ": 4,
-                    "Trung Kỳ": 5,
-                    "Hậu Kỳ": 6,
-                    "Đại Viên Mãn": 7
-                },
-                "color": 0x00FFFF
-            },
-            "Kim Đan": {
-                "levels": {
-                    "Sơ Kỳ": 8,
-                    "Trung Kỳ": 9,
-                    "Hậu Kỳ": 10,
-                    "Đại Viên Mãn": 11
-                },
-                "color": 0xFFD700
-            },
-            "Nguyên Anh": {
-                "levels": {
-                    "Sơ Kỳ": 12,
-                    "Trung Kỳ": 13,
-                    "Hậu Kỳ": 14,
-                    "Đại Viên Mãn": 15
-                },
-                "color": 0xFF4500
-            },
-            "Hóa Thần": {
-                "levels": {
-                    "Sơ Kỳ": 16,
-                    "Trung Kỳ": 17,
-                    "Hậu Kỳ": 18,
-                    "Đại Viên Mãn": 19
-                },
-                "color": 0x9932CC
-            },
-            "Luyện Hư": {
-                "levels": {
-                    "Sơ Kỳ": 20,
-                    "Trung Kỳ": 21,
-                    "Hậu Kỳ": 22,
-                    "Đại Viên Mãn": 23
-                },
-                "color": 0x4169E1
-            },
-            "Hợp Thể": {
-                "levels": {
-                    "Sơ Kỳ": 24,
-                    "Trung Kỳ": 25,
-                    "Hậu Kỳ": 26,
-                    "Đại Viên Mãn": 27
-                },
-                "color": 0xFF0000
-            },
-            "Đại Thừa": {
-                "levels": {
-                    "Sơ Kỳ": 28,
-                    "Trung Kỳ": 29,
-                    "Hậu Kỳ": 30,
-                    "Đại Viên Mãn": 31
-                },
-                "color": 0xFFFFFF
-            },
-            "Bán Đế": {
-                "levels": {
-                    "Sơ Kỳ": 32,
-                    "Trung Kỳ": 33,
-                    "Hậu Kỳ": 34,
-                    "Đại Viên Mãn": 35
-                },
-                "color": 0xFF00FF
-            },
-            "Đại Đế": {
-                "levels": {
-                    "Sơ Kỳ": 36,
-                    "Trung Kỳ": 37,
-                    "Hậu Kỳ": 38,
-                    "Đại Viên Mãn": 39
-                },
-                "color": 0x000000
-            }
-        }
+        self.cultivation_levels = [
+            # (Tên, [Các kỳ nhỏ/tầng], Thọ nguyên, Màu sắc, Mô tả)
+            ("Phàm Nhân", [], "70-100", 0xAAAAAA, "Người thường, chưa tu luyện."),
+            ("Luyện Khí", [f"{i} tầng" for i in range(1, 10)], "120-150", 0xCCCCCC, "Bước đầu hấp thu linh khí."),
+            ("Trúc Cơ", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "200-300", 0x00FF00, "Xây dựng nền tảng tu luyện."),
+            ("Kim Đan", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "500-800", 0xFFD700, "Kết tinh linh lực thành kim đan."),
+            ("Nguyên Anh", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "1000-1500", 0xFF4500, "Ngưng tụ nguyên anh."),
+            ("Hóa Thần", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "2000-3000", 0x9932CC, "Hóa thần thành tiên."),
+            ("Luyện Hư", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "4000-6000", 0x4169E1, "Luyện hư thành thực."),
+            ("Hợp Thể", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "8000-10000", 0xFF0000, "Hợp nhất với thiên địa."),
+            ("Đại Thừa", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "20000-30000", 0xFFFFFF, "Đạt đến cảnh giới tối cao."),
+            ("Phi Thăng", ["Qua Kiếp Độ"], "", 0x00FFFF, "Độ kiếp phi thăng."),
+            # Tiên Nhân trở lên
+            ("Chân Tiên", [], "Vô hạn", 0xFFD700, "Bước vào hàng ngũ tiên nhân."),
+            ("Huyền Tiên", [], "Vô hạn", 0xBEBEFE, "Cảnh giới cao hơn Chân Tiên."),
+            ("Kim Tiên", [], "Vô hạn", 0xFFD700, "Cảnh giới Kim Tiên."),
+            ("Thái Ất Chân Tiên", [], "Vô hạn", 0xFF00FF, "Cảnh giới Thái Ất Chân Tiên."),
+            ("Đại La Kim Tiên", [], "Vô hạn", 0x00FF00, "Cảnh giới Đại La Kim Tiên."),
+            ("Thánh Nhân", [], "Vô hạn", 0xFF0000, "Cảnh giới Thánh Nhân, tối thượng.")
+        ]
 
     def get_cultivation_info(self, level: int) -> tuple:
         """Trả về thông tin về cảnh giới và giai đoạn tu luyện"""
@@ -110,6 +40,7 @@ class Leaderboard(commands.Cog, name="leaderboard"):
 
     @commands.hybrid_command(
         name="tiemlongbang",
+        aliases=["tlb"],
         description="Xem bảng xếp hạng top 10 tu sĩ"
     )
     async def leaderboard(self, ctx: Context) -> None:
