@@ -11,7 +11,7 @@ import aiosqlite
 
 logger = logging.getLogger(__name__)
 
-class SpiritStone(commands.Cog, name="spiritstone"):
+class SpiritStone(commands.Cog, name="Linh Thạch"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.cultivation_levels = {

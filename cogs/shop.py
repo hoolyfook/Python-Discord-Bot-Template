@@ -3,6 +3,8 @@ from discord.ext import commands
 from discord import Embed
 from database.mongodb import mongodb
 import random
+import json
+from datetime import datetime
 
 class Shop(commands.Cog, name="shop"):
     def __init__(self, bot) -> None:
@@ -12,25 +14,92 @@ class Shop(commands.Cog, name="shop"):
                 "name": "Tiểu Hoàn Đan",
                 "price": 1000,
                 "description": "Đan dược cấp thấp, giúp tăng 100 điểm tu vi",
-                "effect": 1000
+                "effect": 1000,
+                "type": "cultivation"
             },
             "dai-hoan-dan": {
                 "name": "Đại Hoàn Đan",
                 "price": 5000,
                 "description": "Đan dược cấp trung, giúp tăng 500 điểm tu vi",
-                "effect": 5000
+                "effect": 5000,
+                "type": "cultivation"
             },
             "than-hoan-dan": {
                 "name": "Thần Hoàn Đan",
                 "price": 10000,
                 "description": "Đan dược cấp cao, giúp tăng 1000 điểm tu vi",
-                "effect": 10000
+                "effect": 10000,
+                "type": "cultivation"
             },
             "tien-hoan-dan": {
                 "name": "Tiên Hoàn Đan",
                 "price": 50000,
                 "description": "Đan dược cấp tiên, giúp tăng 5000 điểm tu vi",
-                "effect": 50000
+                "effect": 50000,
+                "type": "cultivation"
+            },
+            "kim-dan": {
+                "name": "Kim Đan",
+                "price": 100000,
+                "description": "Đan dược cấp Kim Đan, giúp tăng 10000 điểm tu vi",
+                "effect": 100000,
+                "type": "cultivation"
+            },
+            "nguyen-anh-dan": {
+                "name": "Nguyên Anh Đan",
+                "price": 500000,
+                "description": "Đan dược cấp Nguyên Anh, giúp tăng 50000 điểm tu vi",
+                "effect": 500000,
+                "type": "cultivation"
+            },
+            "hoa-than-dan": {
+                "name": "Hóa Thần Đan",
+                "price": 1000000,
+                "description": "Đan dược cấp Hóa Thần, giúp tăng 100000 điểm tu vi",
+                "effect": 1000000,
+                "type": "cultivation"
+            },
+            "hop-the-dan": {
+                "name": "Hợp Thể Đan",
+                "price": 5000000,
+                "description": "Đan dược cấp Hợp Thể, giúp tăng 500000 điểm tu vi",
+                "effect": 5000000,
+                "type": "cultivation"
+            },
+            "dai-thua-dan": {
+                "name": "Đại Thừa Đan",
+                "price": 10000000,
+                "description": "Đan dược cấp Đại Thừa, giúp tăng 1000000 điểm tu vi",
+                "effect": 10000000,
+                "type": "cultivation"
+            },
+            "tieu-tien-dan": {
+                "name": "Tiểu Tiên Đan",
+                "price": 50000000,
+                "description": "Đan dược cấp Tiểu Tiên, giúp tăng 5000000 điểm tu vi",
+                "effect": 50000000,
+                "type": "cultivation"
+            },
+            "dai-tien-dan": {
+                "name": "Đại Tiên Đan",
+                "price": 100000000,
+                "description": "Đan dược cấp Đại Tiên, giúp tăng 10000000 điểm tu vi",
+                "effect": 100000000,
+                "type": "cultivation"
+            },
+            "tieu-than-dan": {
+                "name": "Tiểu Thần Đan",
+                "price": 500000000,
+                "description": "Đan dược cấp Tiểu Thần, giúp tăng 50000000 điểm tu vi",
+                "effect": 500000000,
+                "type": "cultivation"
+            },
+            "dai-than-dan": {
+                "name": "Đại Thần Đan",
+                "price": 1000000000,
+                "description": "Đan dược cấp Đại Thần, giúp tăng 100000000 điểm tu vi",
+                "effect": 1000000000,
+                "type": "cultivation"
             }
         }
 
@@ -186,6 +255,10 @@ class Shop(commands.Cog, name="shop"):
     @commands.hybrid_command(
         name="sudungdan",
         description="Sử dụng đan dược để tăng tu vi"
+    )
+    @commands.commands.describe(
+        item_id="ID của đan dược muốn sử dụng",
+        so_luong="Số lượng muốn sử dụng (mặc định là 1)"
     )
     async def sudungdan(self, context: commands.Context, item_id: str, so_luong: int = 1) -> None:
         """

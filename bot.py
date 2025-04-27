@@ -121,7 +121,7 @@ class DiscordBot(commands.Bot):
         """
         Setup the game status task of the bot.
         """
-        statuses = ["Thiên đạo n"]
+        statuses = ["Thiên đạo nhật nguyệt"]
         await self.change_presence(activity=discord.Game(random.choice(statuses)))
 
     @status_task.before_loop
