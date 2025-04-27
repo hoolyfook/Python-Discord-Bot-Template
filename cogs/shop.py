@@ -256,10 +256,6 @@ class Shop(commands.Cog, name="shop"):
         name="sudungdan",
         description="Sử dụng đan dược để tăng tu vi"
     )
-    @commands.commands.describe(
-        item_id="ID của đan dược muốn sử dụng",
-        so_luong="Số lượng muốn sử dụng (mặc định là 1)"
-    )
     async def sudungdan(self, context: commands.Context, item_id: str, so_luong: int = 1) -> None:
         """
         Sử dụng đan dược để tăng tu vi

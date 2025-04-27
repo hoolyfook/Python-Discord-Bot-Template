@@ -103,18 +103,20 @@ class DiscordBot(commands.Bot):
                 extension = file[:-3]
                 try:
                     await self.load_extension(f"cogs.{extension}")
-                    self.logger.info(f"Loaded extension '{extension}'")
+                    self.logger.info(f"✅ Đã load extension '{extension}'")
                 except Exception as e:
                     exception = f"{type(e).__name__}: {e}"
                     self.logger.error(
-                        f"Failed to load extension {extension}\n{exception}"
+                        f"❌ Không thể load extension {extension}\n{exception}"
                     )
         # Sync commands after loading all cogs
         try:
             synced = await self.tree.sync()
-            self.logger.info(f"Synced {len(synced)} command(s)")
+            self.logger.info(f"✅ Đã đồng bộ {len(synced)} lệnh")
+            for cmd in synced:
+                self.logger.info(f"  - {cmd.name}")
         except Exception as e:
-            self.logger.error(f"Failed to sync commands: {e}")
+            self.logger.error(f"❌ Không thể đồng bộ lệnh: {e}")
 
     @tasks.loop(minutes=1.0)
     async def status_task(self) -> None:

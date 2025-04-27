@@ -246,9 +246,9 @@ class SpiritStone(commands.Cog, name="Linh Thạch"):
 
     @commands.hybrid_command(
         name="setup_role_rewards",
-        description="Thiết lập Linh Thạch thưởng cho các vai trò (admin only)"
+        description="Thiết lập Linh Thạch thưởng cho các vai trò (cần quyền quản lý vai trò)"
     )
-    @commands.has_permissions(administrator=True)
+    @commands.has_permissions(manage_roles=True)
     async def setup_role_rewards(self, ctx: Context, role: discord.Role, reward_amount: int) -> None:
         if reward_amount <= 0:
             embed = discord.Embed(
@@ -272,111 +272,6 @@ class SpiritStone(commands.Cog, name="Linh Thạch"):
         )
         embed.add_field(name="Vai Trò", value=role.mention, inline=True)
         embed.add_field(name="Linh Thạch Thưởng", value=f"**{reward_amount}**", inline=True)
-        embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        await ctx.send(embed=embed)
-
-    @commands.hybrid_command(
-        name="khaikhoang",
-        description="Khai thác để nhận Linh Thạch (số lượng tăng theo tu vi)"
-    )
-    async def khaikhoang(self, ctx: Context) -> None:
-        user_id = str(ctx.author.id)
-        await self.ensure_user(user_id, username=ctx.author.name)
-        
-        user = await mongodb.get_user(user_id)
-        if not user:
-            embed = discord.Embed(
-                title="Lỗi Khai Khoáng",
-                description="Không tìm thấy thông tin người dùng!",
-                color=0xFF4500
-            )
-            embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            await ctx.send(embed=embed)
-            return
-
-        spirit_stones = user.get("spirit_stones", 0)
-        cultivation_level = user.get("cultivation_level", 0)
-
-        # Tính toán số Linh Thạch nhận được dựa trên tu vi
-        base_reward = {
-            "Luyện Khí": 5000,
-            "Trúc Cơ": 10000,
-            "Kim Đan": 20000,
-            "Nguyên Anh": 40000,
-            "Hóa Thần": 80000,
-            "Luyện Hư": 160000,
-            "Hợp Thể": 320000,
-            "Đại Thừa": 640000,
-            "Bán Đế": 1280000,
-            "Đại Đế": 2560000
-        }
-
-        # Lấy thông tin cảnh giới hiện tại
-        realm, stage, _, _ = self.get_cultivation_info(cultivation_level)
-        
-        # Lấy phần thưởng cơ bản theo cảnh giới
-        base = base_reward.get(realm, 5000)
-        
-        # Tính hệ số theo giai đoạn (Sơ Kỳ: x1, Trung Kỳ: x1.2, Hậu Kỳ: x1.5, Đại Viên Mãn: x2)
-        stage_multiplier = {
-            "Sơ Kỳ": 1,
-            "Trung Kỳ": 1.2,
-            "Hậu Kỳ": 1.5,
-            "Đại Viên Mãn": 2
-        }
-        
-        multiplier = stage_multiplier.get(stage, 1)
-        
-        # Tính số Linh Thạch nhận được
-        mining_reward = int(base * multiplier)
-
-        # Thêm yếu tố ngẫu nhiên (90% - 110% phần thưởng)
-        random_factor = random.uniform(0.9, 1.1)
-        mining_reward = int(mining_reward * random_factor)
-
-        # Cập nhật số Linh Thạch mới
-        new_spirit_stones = spirit_stones + mining_reward
-        
-        await mongodb.update_user(user_id, {
-            "spirit_stones": new_spirit_stones
-        })
-
-        embed = discord.Embed(
-            title="⛏️ Khai Khoáng Thành Công",
-            description=f"Bạn đã khai thác được Linh Thạch tại mỏ khoáng!",
-            color=0x1E90FF
-        )
-        embed.add_field(
-            name="Cảnh Giới",
-            value=f"**{realm} {stage}**",
-            inline=True
-        )
-        embed.add_field(
-            name="Phần Thưởng Cơ Bản",
-            value=f"**{base:,}** 🪨",
-            inline=True
-        )
-        embed.add_field(
-            name="Hệ Số Giai Đoạn",
-            value=f"**x{multiplier:.1f}**",
-            inline=True
-        )
-        embed.add_field(
-            name="Yếu Tố May Mắn",
-            value=f"**x{random_factor:.2f}**",
-            inline=True
-        )
-        embed.add_field(
-            name="Tổng Nhận Được",
-            value=f"**{mining_reward:,}** 🪨",
-            inline=True
-        )
-        embed.add_field(
-            name="Linh Thạch Hiện Tại",
-            value=f"**{new_spirit_stones:,}** 🪨",
-            inline=True
-        )
-        
         embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         await ctx.send(embed=embed)
 

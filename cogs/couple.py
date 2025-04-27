@@ -191,10 +191,6 @@ class Couple(commands.Cog, name="couple"):
         aliases=["sd", "su-dung"],
         description="Sử dụng đan dược tình yêu"
     )
-    @app_commands.describe(
-        potion="Tên đan dược muốn sử dụng",
-        partner="Người bạn muốn tặng đan dược"
-    )
     async def sudung(self, context: Context, potion: str, partner: discord.Member) -> None:
         """Sử dụng đan dược tình yêu"""
         try:
