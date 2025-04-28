@@ -54,7 +54,7 @@ class Mining(commands.Cog, name="Khai thác thạch"):
 
     @commands.hybrid_command(
         name="khaithac",
-        description="Khai thác Linh Thạch"
+        description="Khai thác Linh Thạch <:linhthachydon:1366455607812427807>"
     )
     async def khaithac(self, ctx: commands.Context) -> None:
         """
@@ -100,12 +100,11 @@ class Mining(commands.Cog, name="Khai thác thạch"):
         
         # Tạo embed thông báo
         embed = discord.Embed(
-            title="✅ Khai thác thành công!",
-            description=f"Bạn đã tìm thấy {spirit_stones_found} Linh Thạch",
+            title="Khai thác thành công!",
+            description=f"Bạn đã tìm thấy {spirit_stones_found} Linh Thạch <:linhthachydon:1366455607812427807>",
             color=0x00FF00
         )
         embed.add_field(name="Số lần còn lại", value=f"{1000 - (mining_attempts + 1)}", inline=True)
-        
         await ctx.send(embed=embed)
 
 async def setup(bot) -> None:

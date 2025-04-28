@@ -38,7 +38,7 @@ class Gamble(commands.Cog, name="Cờ Bạc"):
 
         spirit_stones = user.get("spirit_stones", 0)
         if spirit_stones < bet:
-            await context.send(f"❌ Bạn không đủ linh thạch! Bạn có {spirit_stones} linh thạch.")
+            await context.send(f"❌ Bạn không đủ linh thạch! Bạn có {spirit_stones} linh thạch <:linhthachydon:1366455607812427807>.")
             return
 
         # Roll 3 dice
@@ -75,7 +75,7 @@ class Gamble(commands.Cog, name="Cờ Bạc"):
         embed.add_field(name="Lựa chọn", value=choice.upper(), inline=False)
         embed.add_field(name="Kết quả", value=result_text, inline=False)
         embed.add_field(name="Linh thạch", value=f"{winnings:+d} linh thạch", inline=False)
-        embed.add_field(name="Linh thạch hiện tại", value=f"{new_spirit_stones} linh thạch", inline=False)
+        embed.add_field(name="Linh thạch hiện tại", value=f"{new_spirit_stones} linh thạch <:linhthachydon:1366455607812427807>", inline=False)
 
         await context.send(embed=embed)
 
