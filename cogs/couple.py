@@ -6,6 +6,7 @@ from discord import Embed
 import json
 from datetime import datetime
 import random
+import asyncio
 
 class Couple(commands.Cog, name="couple"):
     def __init__(self, bot) -> None:
@@ -30,10 +31,137 @@ class Couple(commands.Cog, name="couple"):
 
     @commands.hybrid_command(
         name="daolu",
-        aliases=["dl", "daoluluc", "tinhduyen"],
-        description="Hiển thị bảng xếp hạng đạo lữ dựa trên độ thân mật"
+        aliases=["dl", "status", "tinhduyen"],
+        description="Xem tình trạng đạo lữ của bản thân"
     )
     async def daolu(self, context: Context) -> None:
+        """
+        Xem tình trạng đạo lữ của bản thân
+        """
+        try:
+            if not context.guild:
+                embed = discord.Embed(
+                    title="❌ Không Thể Thực Hiện",
+                    description="Chỉ có thể xem tình trạng đạo lữ trong môn phái!",
+                    color=0xFF4500
+                )
+                await context.send(embed=embed)
+                return
+
+            # Đọc dữ liệu từ file relationships.json
+            with open("database/relationships.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            user_id = str(context.author.id)
+
+            # Kiểm tra xem người dùng có trong hệ thống không
+            if user_id not in data["relationships"]:
+                embed = discord.Embed(
+                    title="💘 Tình Duyên Chưa Đến",
+                    description="Ngươi vẫn chưa có đạo lữ.\nHãy tiếp tục tu luyện, chờ đợi lương duyên!",
+                    color=0xFF69B4
+                )
+                embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                await context.send(embed=embed)
+                return
+
+            partner_id = data["relationships"][user_id]["partner"]
+            
+            if partner_id == "None":
+                embed = discord.Embed(
+                    title="💘 Tình Duyên Chưa Đến",
+                    description="Ngươi vẫn chưa có đạo lữ.\nHãy tiếp tục tu luyện, chờ đợi lương duyên!",
+                    color=0xFF69B4
+                )
+                embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                await context.send(embed=embed)
+                return
+
+            try:
+                # Lấy thông tin đạo lữ
+                partner = await context.guild.fetch_member(int(partner_id))
+                if not partner:
+                    embed = discord.Embed(
+                        title="❌ Không Tìm Thấy",
+                        description="Không tìm thấy đạo lữ của ngươi trong môn phái này!",
+                        color=0xFF4500
+                    )
+                    await context.send(embed=embed)
+                    return
+
+                # Tính tổng điểm thân mật
+                total_intimacy = data["relationships"][user_id]["intimacy"]
+                if partner_id in data["relationships"]:
+                    total_intimacy += data["relationships"][partner_id]["intimacy"]
+
+                # Tính thời gian bên nhau
+                since_date = datetime.fromisoformat(data["relationships"][user_id]["since"].replace("Z", "+00:00"))
+                time_diff = datetime.now() - since_date
+                days = time_diff.days
+
+                # Xác định cấp độ quan hệ dựa trên điểm thân mật
+                relationship_level = "Sơ Giao Chi Giao"  # Mặc định
+                if total_intimacy >= 10000:
+                    relationship_level = "Tiên Thê Tiên Phu"
+                elif total_intimacy >= 5000:
+                    relationship_level = "Đạo Lữ Song Tu"
+                elif total_intimacy >= 2000:
+                    relationship_level = "Tâm Ý Tương Thông"
+                elif total_intimacy >= 1000:
+                    relationship_level = "Tình Trường Lữ Đoạn"
+
+                embed = discord.Embed(
+                    title="💕 Tình Trạng Đạo Lữ",
+                    description=f"**Đạo Lữ của {context.author.mention}**",
+                    color=0xFF69B4
+                )
+                embed.add_field(
+                    name="❤️ Đạo Lữ",
+                    value=f"{partner.mention}",
+                    inline=False
+                )
+                embed.add_field(
+                    name="✨ Cấp Độ Quan Hệ",
+                    value=relationship_level,
+                    inline=True
+                )
+                embed.add_field(
+                    name="💝 Điểm Thân Mật",
+                    value=f"{total_intimacy:,} điểm",
+                    inline=True
+                )
+                embed.add_field(
+                    name="⏳ Thời Gian Bên Nhau",
+                    value=f"{days} ngày",
+                    inline=True
+                )
+                embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+                await context.send(embed=embed)
+
+            except discord.NotFound:
+                embed = discord.Embed(
+                    title="❌ Không Tìm Thấy",
+                    description="Không tìm thấy đạo lữ của ngươi trong môn phái này!",
+                    color=0xFF4500
+                )
+                await context.send(embed=embed)
+
+        except Exception as e:
+            self.bot.logger.error(f"Lỗi trong lệnh daolu: {str(e)}")
+            embed = discord.Embed(
+                title="Lỗi",
+                description=f"Có lỗi xảy ra khi xem tình trạng đạo lữ: {str(e)}",
+                color=0xFF4500
+            )
+            await context.send(embed=embed)
+
+    @commands.hybrid_command(
+        name="daolubang",
+        aliases=["dlb", "daoluluc", "tinhduyenbang"],
+        description="Hiển thị bảng xếp hạng đạo lữ dựa trên độ thân mật"
+    )
+    async def daolubang(self, context: Context) -> None:
         """
         Hiển thị bảng xếp hạng đạo lữ dựa trên độ thân mật
         """
@@ -202,7 +330,7 @@ class Couple(commands.Cog, name="couple"):
             intimacy_gain = random.randint(500, 1000)
             
             # Cập nhật điểm thân mật
-            await self.update_relationship(user_id, partner_id, intimacy_gain)
+            await self.update_relationship(user_id, partner_id, intimacy_gain/2)
 
             # Tạo embed thông báo
             embed = discord.Embed(
@@ -221,6 +349,295 @@ class Couple(commands.Cog, name="couple"):
             embed = discord.Embed(
                 title="Lỗi",
                 description=f"Có lỗi xảy ra khi tặng quà: {str(e)}",
+                color=0xFF4500
+            )
+            await context.send(embed=embed)
+
+    @commands.hybrid_command(
+        name="cauhon",
+        aliases=["ch", "propose", "kethon"],
+        description="Kết đạo hữu thành đạo lữ, cùng tu tiên luyện đạo"
+    )
+    @app_commands.describe(
+        member="Đạo hữu mà ngươi muốn kết thành đạo lữ"
+    )
+    async def cauhon(self, context: Context, member: discord.Member) -> None:
+        """
+        Kết đạo hữu thành đạo lữ, cùng tu tiên luyện đạo
+        
+        Parameters
+        ----------
+        member: Đạo hữu được cầu hôn
+        """
+        try:
+            if not context.guild:
+                embed = discord.Embed(
+                    title="❌ Không Thể Thực Hiện",
+                    description="Nghi thức kết đạo lữ chỉ có thể thực hiện trong môn phái!",
+                    color=0xFF4500
+                )
+                await context.send(embed=embed)
+                return
+
+            if member.id == context.author.id:
+                embed = discord.Embed(
+                    title="❌ Không Thể Thực Hiện",
+                    description="Tự kết đạo lữ với chính mình? Đạo hữu điên rồi sao?",
+                    color=0xFF4500
+                )
+                await context.send(embed=embed)
+                return
+
+            if member.bot:
+                embed = discord.Embed(
+                    title="❌ Không Thể Thực Hiện",
+                    description="Ngươi không thể kết đạo lữ với một khôi lỗi!",
+                    color=0xFF4500
+                )
+                await context.send(embed=embed)
+                return
+
+            # Đọc dữ liệu từ file relationships.json
+            with open("database/relationships.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            user_id = str(context.author.id)
+            target_id = str(member.id)
+
+            # Kiểm tra xem người cầu hôn đã có đạo lữ chưa
+            if user_id in data["relationships"] and data["relationships"][user_id]["partner"] != "None":
+                embed = discord.Embed(
+                    title="❌ Không Thể Thực Hiện",
+                    description="Ngươi đã có đạo lữ, sao dám phụ lòng người ta?",
+                    color=0xFF4500
+                )
+                await context.send(embed=embed)
+                return
+
+            # Kiểm tra xem người được cầu hôn đã có đạo lữ chưa
+            if target_id in data["relationships"] and data["relationships"][target_id]["partner"] != "None":
+                embed = discord.Embed(
+                    title="❌ Không Thể Thực Hiện",
+                    description=f"{member.mention} đã có đạo lữ, đừng phá hoại nhân duyên của người ta!",
+                    color=0xFF4500
+                )
+                await context.send(embed=embed)
+                return
+
+            # Tạo embed thông báo cầu hôn
+            embed = discord.Embed(
+                title="💍 Thiên Định Lương Duyên",
+                description=f"Hỡi {member.mention}!\n\n"
+                          f"Ta {context.author.mention} thấy ngươi chính là có duyên với ta!\n"
+                          f"Không biết ngươi có nguyện kết đạo lữ cùng ta, song tu luyện đạo?\n\n"
+                          f"➤ Ấn ✅ để thuận theo thiên ý\n"
+                          f"➤ Ấn ❌ để duyên phận lỡ làng",
+                color=0xFF69B4
+            )
+            embed.set_footer(text="Thời hạn suy nghĩ: 60 giây | Duyên phận vô thường, xin đừng bỏ lỡ")
+
+            # Gửi tin nhắn và thêm reactions
+            message = await context.send(embed=embed)
+            await message.add_reaction("✅")
+            await message.add_reaction("❌")
+
+            def check(reaction, user):
+                return user.id == member.id and str(reaction.emoji) in ["✅", "❌"] and reaction.message.id == message.id
+
+            try:
+                # Chờ phản hồi trong 60 giây
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+
+                if str(reaction.emoji) == "✅":
+                    # Tạo hoặc cập nhật dữ liệu cho cả hai người
+                    current_time = datetime.now().isoformat()
+
+                    if user_id not in data["relationships"]:
+                        data["relationships"][user_id] = {"partner": "None", "intimacy": 0, "since": current_time}
+                    if target_id not in data["relationships"]:
+                        data["relationships"][target_id] = {"partner": "None", "intimacy": 0, "since": current_time}
+
+                    # Cập nhật partner cho cả hai
+                    data["relationships"][user_id]["partner"] = target_id
+                    data["relationships"][user_id]["since"] = current_time
+                    data["relationships"][user_id]["intimacy"] = 0
+
+                    data["relationships"][target_id]["partner"] = user_id
+                    data["relationships"][target_id]["since"] = current_time
+                    data["relationships"][target_id]["intimacy"] = 0
+
+                    # Lưu dữ liệu
+                    with open("database/relationships.json", "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=4)
+
+                    success_embed = discord.Embed(
+                        title="💕 Thiên Định Lương Duyên",
+                        description=f"🎊 Chúc mừng! Một đôi đạo lữ mới đã được thiên địa chứng giám!\n\n"
+                                  f"➤ {context.author.mention} và {member.mention} đã kết thành đạo lữ\n"
+                                  f"➤ Từ nay về sau, hai người sẽ cùng nhau tu tiên, luyện đạo\n"
+                                  f"➤ Mong rằng đôi đạo lữ sẽ sớm đạt tới đỉnh cao võ đạo!",
+                        color=0xFF69B4
+                    )
+                    await message.edit(embed=success_embed)
+                else:
+                    reject_embed = discord.Embed(
+                        title="💔 Duyên Phận Lỡ Làng",
+                        description=f"Tiếc thay!\n\n"
+                                  f"➤ {member.mention} đã từ chối lời cầu thân của {context.author.mention}\n"
+                                  f"➤ Có lẽ duyên phận chưa đến, đừng quá buồn phiền\n"
+                                  f"➤ Hãy tiếp tục tu luyện, chờ đợi lương duyên khác!",
+                        color=0xFF4500
+                    )
+                    await message.edit(embed=reject_embed)
+
+            except asyncio.TimeoutError:
+                timeout_embed = discord.Embed(
+                    title="⏰ Duyên Phận Trôi Qua",
+                    description=f"Tiếc thay!\n\n"
+                              f"➤ {member.mention} đã không đáp lại lời cầu thân của {context.author.mention}\n"
+                              f"➤ Có lẽ thời cơ chưa đến\n"
+                              f"➤ Hãy tiếp tục tu luyện, chờ đợi cơ duyên khác!",
+                    color=0xFF4500
+                )
+                await message.edit(embed=timeout_embed)
+
+        except Exception as e:
+            self.bot.logger.error(f"Lỗi trong lệnh cauhon: {str(e)}")
+            embed = discord.Embed(
+                title="Lỗi",
+                description=f"Có lỗi xảy ra trong nghi thức kết đạo lữ: {str(e)}",
+                color=0xFF4500
+            )
+            await context.send(embed=embed)
+
+    @commands.hybrid_command(
+        name="lyhon",
+        aliases=["lh", "chiatay", "doandao"],
+        description="Đoạn tuyệt đạo lữ, từ nay mỗi người một phương trời tu luyện"
+    )
+    async def lyhon(self, context: Context) -> None:
+        """
+        Đoạn tuyệt đạo lữ, từ nay mỗi người một phương trời tu luyện
+        """
+        try:
+            if not context.guild:
+                embed = discord.Embed(
+                    title="❌ Không Thể Thực Hiện",
+                    description="Nghi thức đoạn tuyệt chỉ có thể thực hiện trong môn phái!",
+                    color=0xFF4500
+                )
+                await context.send(embed=embed)
+                return
+
+            # Đọc dữ liệu từ file relationships.json
+            with open("database/relationships.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            user_id = str(context.author.id)
+
+            # Kiểm tra xem người dùng có đạo lữ không
+            if user_id not in data["relationships"] or data["relationships"][user_id]["partner"] == "None":
+                embed = discord.Embed(
+                    title="❌ Không Thể Thực Hiện",
+                    description="Ngươi làm gì có đạo lữ mà đòi đoạn tuyệt?",
+                    color=0xFF4500
+                )
+                await context.send(embed=embed)
+                return
+
+            partner_id = data["relationships"][user_id]["partner"]
+            
+            try:
+                # Lấy thông tin đạo lữ
+                partner = await context.guild.fetch_member(int(partner_id))
+                if not partner:
+                    embed = discord.Embed(
+                        title="❌ Không Thể Thực Hiện",
+                        description="Không tìm thấy đạo lữ của ngươi trong môn phái này!",
+                        color=0xFF4500
+                    )
+                    await context.send(embed=embed)
+                    return
+            except discord.NotFound:
+                embed = discord.Embed(
+                    title="❌ Không Thể Thực Hiện",
+                    description="Không tìm thấy đạo lữ của ngươi trong môn phái này!",
+                    color=0xFF4500
+                )
+                await context.send(embed=embed)
+                return
+
+            # Tạo embed xác nhận
+            embed = discord.Embed(
+                title="💔 Đoạn Tuyệt Chi Thư",
+                description=f"Hỡi {partner.mention}!\n\n"
+                          f"Ta {context.author.mention} xin gửi đến ngươi bức thư đoạn tuyệt này.\n"
+                          f"Duyên phận đã hết, đường ai nấy tu.\n\n"
+                          f"➤ Ấn ✅ để xác nhận đoạn tuyệt\n"
+                          f"➤ Ấn ❌ để níu kéo duyên phận",
+                color=0xFF4500
+            )
+            embed.set_footer(text="Thời hạn suy nghĩ: 60 giây | Một khi đoạn tuyệt, vạn kiếp không quay lại")
+
+            # Gửi tin nhắn và thêm reactions
+            message = await context.send(embed=embed)
+            await message.add_reaction("✅")
+            await message.add_reaction("❌")
+
+            def check(reaction, user):
+                return user.id == int(partner_id) and str(reaction.emoji) in ["✅", "❌"] and reaction.message.id == message.id
+
+            try:
+                # Chờ phản hồi trong 60 giây
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+
+                if str(reaction.emoji) == "✅":
+                    # Xóa thông tin đạo lữ của cả hai
+                    data["relationships"][user_id]["partner"] = "None"
+                    data["relationships"][user_id]["intimacy"] = 0
+                    data["relationships"][partner_id]["partner"] = "None"
+                    data["relationships"][partner_id]["intimacy"] = 0
+
+                    # Lưu dữ liệu
+                    with open("database/relationships.json", "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=4)
+
+                    final_embed = discord.Embed(
+                        title="💔 Duyên Tận",
+                        description=f"Từ đây đường ai nấy đi!\n\n"
+                                  f"➤ {context.author.mention} và {partner.mention} đã chính thức đoạn tuyệt\n"
+                                  f"➤ Mong hai vị từ nay tinh tiến tu đạo\n"
+                                  f"➤ Hữu duyên thiên lý năng tương ngộ, vô duyên đối diện bất tương phùng",
+                        color=0xFF4500
+                    )
+                    await message.edit(embed=final_embed)
+                else:
+                    reject_embed = discord.Embed(
+                        title="💕 Duyên Chưa Dứt",
+                        description=f"Có duyên gặp lại!\n\n"
+                                  f"➤ {partner.mention} đã không đồng ý đoạn tuyệt với {context.author.mention}\n"
+                                  f"➤ Mong hai vị hãy cùng nhau hóa giải hiểm cảnh\n"
+                                  f"➤ Đạo lữ đồng tâm, phương có thể đại đạo viên mãn",
+                        color=0xFF69B4
+                    )
+                    await message.edit(embed=reject_embed)
+
+            except asyncio.TimeoutError:
+                timeout_embed = discord.Embed(
+                    title="⏰ Thời Gian Trôi Qua",
+                    description=f"Tiếc thay!\n\n"
+                              f"➤ {partner.mention} đã không phản hồi thư đoạn tuyệt của {context.author.mention}\n"
+                              f"➤ Có lẽ cần thêm thời gian để suy nghĩ\n"
+                              f"➤ Hãy cùng nhau bình tâm, tĩnh trí!",
+                    color=0xFF4500
+                )
+                await message.edit(embed=timeout_embed)
+
+        except Exception as e:
+            self.bot.logger.error(f"Lỗi trong lệnh lyhon: {str(e)}")
+            embed = discord.Embed(
+                title="Lỗi",
+                description=f"Có lỗi xảy ra trong nghi thức đoạn tuyệt: {str(e)}",
                 color=0xFF4500
             )
             await context.send(embed=embed)
