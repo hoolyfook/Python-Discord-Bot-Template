@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
+from datetime import datetime
 
 class Help(commands.Cog, name="help"):
     def __init__(self, bot) -> None:
@@ -16,19 +17,15 @@ class Help(commands.Cog, name="help"):
         """
         try:
             self.bot.logger.info(f"Starting help command for user {context.author.name}")
-            embed = discord.Embed(
-                title="📚 Danh sách lệnh",
-                description="Dưới đây là danh sách các lệnh bạn có thể sử dụng:",
+            
+            # Thông tin về prefix
+            prefix = self.bot.bot_prefix
+            prefix_embed = discord.Embed(
+                title="ℹ️ Thông tin",
+                description=f"Prefix: `{prefix}`\nBạn có thể sử dụng lệnh bằng cách:\n- Gõ `{prefix}lệnh`\n- Hoặc sử dụng slash command `/lệnh`",
                 color=0xBEBEFE
             )
-            
-            # Thêm thông tin về prefix
-            prefix = self.bot.bot_prefix
-            embed.add_field(
-                name="ℹ️ Thông tin",
-                value=f"Prefix: `{prefix}`\nBạn có thể sử dụng lệnh bằng cách:\n- Gõ `{prefix}lệnh`\n- Hoặc sử dụng slash command `/lệnh`",
-                inline=False
-            )
+            await context.send(embed=prefix_embed)
 
             # Lặp qua tất cả các cog
             for cog_name in self.bot.cogs:
@@ -48,7 +45,49 @@ class Help(commands.Cog, name="help"):
                 if not commands:
                     self.bot.logger.info(f"No commands found in cog {cog_name}")
                     continue
-                
+
+                # Xử lý riêng cho cog Couple
+                if cog_name == "couple":
+                    couple_commands = [
+                        {
+                            "name": "💍 /cauhon [@đạo_hữu]",
+                            "description": "Kết đạo hữu thành đạo lữ, cùng tu tiên luyện đạo",
+                            "color": 0xFF69B4
+                        },
+                        {
+                            "name": "💔 /lyhon",
+                            "description": "Đoạn tuyệt đạo lữ, từ nay mỗi người một phương trời tu luyện",
+                            "color": 0xFF4500
+                        },
+                        {
+                            "name": "❤️ /daolu",
+                            "description": "Xem tình trạng đạo lữ của bản thân",
+                            "color": 0xFF69B4
+                        },
+                        {
+                            "name": "📊 /daolubang",
+                            "description": "Hiển thị bảng xếp hạng đạo lữ dựa trên độ thân mật",
+                            "color": 0xFF69B4
+                        },
+                        {
+                            "name": "🎁 /songtu",
+                            "description": "Tặng quà cho đạo lữ để tăng điểm thân mật",
+                            "color": 0xFF69B4
+                        }
+                    ]
+
+                    # Gửi từng lệnh trong một embed riêng
+                    for cmd in couple_commands:
+                        embed = discord.Embed(
+                            title=cmd["name"],
+                            description=cmd["description"],
+                            color=cmd["color"]
+                        )
+                        embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                        await context.send(embed=embed)
+                    continue
+
+                # Xử lý các cog khác
                 command_list = []
                 for command in commands:
                     try:
@@ -86,35 +125,19 @@ class Help(commands.Cog, name="help"):
                         continue
                 
                 if command_list:
-                    # Thêm breakline trước mỗi nhóm lệnh
-                    embed.add_field(
-                        name="\u200b",
-                        value="════════════════════════════════",
-                        inline=False
+                    # Tạo embed riêng cho mỗi cog
+                    embed = discord.Embed(
+                        title=f"📁 {cog_name.capitalize()}",
+                        description="\n".join(command_list),
+                        color=0xBEBEFE
                     )
                     
-                    # Thêm nhóm lệnh
-                    embed.add_field(
-                        name=f"📁 {cog_name.capitalize()}",
-                        value="\n".join(command_list),
-                        inline=False
-                    )
+                    if context.author.avatar:
+                        embed.set_footer(text=f"Yêu cầu bởi {context.author.name}", icon_url=context.author.avatar.url)
+                    else:
+                        embed.set_footer(text=f"Yêu cầu bởi {context.author.name}")
                     
-                    # Thêm breakline sau mỗi nhóm lệnh
-                    embed.add_field(
-                        name="\u200b",
-                        value="════════════════════════════════",
-                        inline=False
-                    )
-            
-            # Thêm footer
-            if context.author.avatar:
-                embed.set_footer(text=f"Yêu cầu bởi {context.author.name}", icon_url=context.author.avatar.url)
-            else:
-                embed.set_footer(text=f"Yêu cầu bởi {context.author.name}")
-            
-            self.bot.logger.info("Sending help embed")
-            await context.send(embed=embed)
+                    await context.send(embed=embed)
             
         except Exception as e:
             self.bot.logger.error(f"Error in help command: {str(e)}")

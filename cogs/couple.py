@@ -11,6 +11,56 @@ import asyncio
 class Couple(commands.Cog, name="couple"):
     def __init__(self, bot) -> None:
         self.bot = bot
+        self._original_help_command = bot.help_command
+        bot.help_command = None
+
+    def cog_unload(self):
+        self.bot.help_command = self._original_help_command
+
+    async def cog_check(self, ctx):
+        if ctx.command.name == "help":
+            # Danh sách các lệnh và mô tả
+            commands_list = [
+                {
+                    "name": "💍 /cauhon [@đạo_hữu]",
+                    "description": "Kết đạo hữu thành đạo lữ, cùng tu tiên luyện đạo",
+                    "color": 0xFF69B4
+                },
+                {
+                    "name": "💔 /lyhon",
+                    "description": "Đoạn tuyệt đạo lữ, từ nay mỗi người một phương trời tu luyện",
+                    "color": 0xFF4500
+                },
+                {
+                    "name": "❤️ /daolu",
+                    "description": "Xem tình trạng đạo lữ của bản thân",
+                    "color": 0xFF69B4
+                },
+                {
+                    "name": "📊 /daolubang",
+                    "description": "Hiển thị bảng xếp hạng đạo lữ dựa trên độ thân mật",
+                    "color": 0xFF69B4
+                },
+                {
+                    "name": "🎁 /songtu",
+                    "description": "Tặng quà cho đạo lữ để tăng điểm thân mật",
+                    "color": 0xFF69B4
+                }
+            ]
+            
+            # Gửi từng lệnh trong một embed riêng
+            for cmd in commands_list:
+                embed = discord.Embed(
+                    title=cmd["name"],
+                    description=cmd["description"],
+                    color=cmd["color"]
+                )
+                embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                await ctx.send(embed=embed)
+            
+            return False
+        
+        return True
 
     async def update_relationship(self, user_id: str, partner_id: str, intimacy_change: int) -> None:
         """Cập nhật điểm thân mật cho cặp đôi"""
