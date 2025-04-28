@@ -7,7 +7,7 @@ import aiosqlite
 from datetime import datetime
 from database.mongodb import mongodb
 
-class General(commands.Cog, name="general"):
+class General(commands.Cog, name="Tu Tiên"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.context_menu_user = app_commands.ContextMenu(

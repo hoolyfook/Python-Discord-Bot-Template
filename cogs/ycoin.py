@@ -327,6 +327,7 @@ class SpiritStone(commands.Cog, name="Linh Thạch"):
         name="cuop",
         description="Cướp Linh Thạch từ người khác"
     )
+    @commands.cooldown(1, 300, commands.BucketType.user)  # 5 phút cooldown
     async def rob(self, ctx: Context) -> None:
         robber_id = str(ctx.author.id)
         await self.ensure_user(robber_id, username=ctx.author.name)
@@ -366,8 +367,20 @@ class SpiritStone(commands.Cog, name="Linh Thạch"):
         robber_level = robber["cultivation_level"]
         failed_attempts = robber["failed_rob_attempts"]
 
+        import math
+
         level_diff = robber_level - target_level
-        success_rate = min(0.8, max(0.2, 0.5 + (level_diff * 0.1)))
+
+        if level_diff > 0:
+            # Robber cấp cao hơn
+            success_rate = min(1.0, 0.5 + 0.2 * level_diff)  # Base 50%, mỗi cấp hơn +10%, tối đa 100%
+        elif level_diff < 0:
+            # Robber cấp thấp hơn
+            success_rate = math.exp(0.5 * level_diff)        # Hàm mũ tụt xuống
+            success_rate = min(0.5, success_rate)            # Không quá 50%
+        else:
+            # Bằng cấp
+            success_rate = 0.5
         
         if random.random() < success_rate:
             steal_amount = target_stones // 10

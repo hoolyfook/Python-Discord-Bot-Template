@@ -32,4 +32,4 @@ class BaseCog(commands.Cog):
 # Cài đặt Cog vào bot và chỉ định category
 async def setup(bot) -> None:
     # Dùng category để nhóm các lệnh trong phần help
-    await bot.add_cog(BaseCog(bot, category="General"))
+    await bot.add_cog(BaseCog(bot, category="Tu Tiên Giới"))
