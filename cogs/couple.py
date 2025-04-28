@@ -10,36 +10,6 @@ import random
 class Couple(commands.Cog, name="couple"):
     def __init__(self, bot) -> None:
         self.bot = bot
-        self.love_potions = {
-            "tieu-tinh-dan": {
-                "name": "Tiểu Tình Đan",
-                "price": 1000,
-                "description": "Đan dược tình yêu cấp thấp, giúp tăng 100 điểm thân mật",
-                "effect": 100,
-                "cooldown": 3600  # 1 giờ
-            },
-            "dai-tinh-dan": {
-                "name": "Đại Tình Đan",
-                "price": 5000,
-                "description": "Đan dược tình yêu cấp trung, giúp tăng 500 điểm thân mật",
-                "effect": 500,
-                "cooldown": 7200  # 2 giờ
-            },
-            "than-tinh-dan": {
-                "name": "Thần Tình Đan",
-                "price": 10000,
-                "description": "Đan dược tình yêu cấp cao, giúp tăng 1000 điểm thân mật",
-                "effect": 1000,
-                "cooldown": 14400  # 4 giờ
-            },
-            "tien-tinh-dan": {
-                "name": "Tiên Tình Đan",
-                "price": 50000,
-                "description": "Đan dược tình yêu cấp tiên, giúp tăng 5000 điểm thân mật",
-                "effect": 5000,
-                "cooldown": 28800  # 8 giờ
-            }
-        }
 
     async def update_relationship(self, user_id: str, partner_id: str, intimacy_change: int) -> None:
         """Cập nhật điểm thân mật cho cặp đôi"""
@@ -131,27 +101,34 @@ class Couple(commands.Cog, name="couple"):
                 embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
                 await context.send(embed=embed)
                 return
-            
-            embed = discord.Embed(
-                title="💕 Đạo Lữ Bảng",
-                description="Top 10 cặp đôi có độ thân mật cao nhất",
-                color=0xFF69B4
-            )
-            
-            for i, couple in enumerate(couples[:10], 1):
-                # Chuyển đổi thời gian
-                since_date = datetime.fromisoformat(couple["since"].replace("Z", "+00:00"))
-                time_diff = datetime.now() - since_date
-                days = time_diff.days
-                
-                embed.add_field(
-                    name=f"{i}. {couple['user1'].name} ❤️ {couple['user2'].name}",
-                    value=f"**Độ Thân Mật:** {couple['intimacy']:,} điểm\n**Quen nhau:** {days} ngày",
-                    inline=False
+
+            # Chia thành các trang, mỗi trang 10 cặp
+            pages = []
+            for i in range(0, len(couples), 10):
+                page_couples = couples[i:i+10]
+                embed = discord.Embed(
+                    title="💕 Đạo Lữ Bảng",
+                    description=f"Top {min(len(couples), 10)} cặp đôi có độ thân mật cao nhất (Trang {len(pages) + 1})",
+                    color=0xFF69B4
                 )
-            
-            embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            await context.send(embed=embed)
+                
+                for j, couple in enumerate(page_couples, i + 1):
+                    # Chuyển đổi thời gian
+                    since_date = datetime.fromisoformat(couple["since"].replace("Z", "+00:00"))
+                    time_diff = datetime.now() - since_date
+                    days = time_diff.days
+                    
+                    embed.add_field(
+                        name=f"{j}. {couple['user1'].name} ❤️ {couple['user2'].name}",
+                        value=f"**Độ Thân Mật:** {couple['intimacy']:,} điểm\n**Quen nhau:** {days} ngày",
+                        inline=False
+                    )
+                
+                embed.set_footer(text=f"SpiritStone Bot | Trang {len(pages) + 1}/{(len(couples) + 9) // 10} | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                pages.append(embed)
+
+            # Gửi trang đầu tiên
+            await context.send(embed=pages[0])
             
         except Exception as e:
             self.bot.logger.error(f"Lỗi trong lệnh daolu: {str(e)}")
@@ -164,115 +141,88 @@ class Couple(commands.Cog, name="couple"):
             await context.send(embed=embed)
 
     @commands.hybrid_command(
-        name="tinhdan",
-        aliases=["td", "tinh-dan"],
-        description="Hiển thị danh sách đan dược tình yêu"
+        name="songtu",
+        aliases=["st", "tangqua", "gift"],
+        description="Tặng quà cho đạo lữ của bạn để tăng điểm thân mật"
     )
-    async def tinhdan(self, context: Context) -> None:
-        """Hiển thị danh sách đan dược tình yêu"""
-        embed = discord.Embed(
-            title="💝 Đan Dược Tình Yêu",
-            description="Danh sách các loại đan dược tình yêu có thể sử dụng",
-            color=0xFF69B4
-        )
-        
-        for potion_id, potion in self.love_potions.items():
-            embed.add_field(
-                name=f"**{potion['name']}** - {potion['price']:,} Linh Thạch",
-                value=f"{potion['description']}\n**Hiệu quả:** +{potion['effect']:,} điểm thân mật\n**Thời gian chờ:** {potion['cooldown']//3600} giờ",
-                inline=False
-            )
-        
-        embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        await context.send(embed=embed)
-
-    @commands.hybrid_command(
-        name="sudung",
-        aliases=["sd", "su-dung"],
-        description="Sử dụng đan dược tình yêu"
-    )
-    async def sudung(self, context: Context, potion: str, partner: discord.Member) -> None:
-        """Sử dụng đan dược tình yêu"""
+    async def songtu(self, context: Context) -> None:
+        """
+        Tặng quà cho đạo lữ để tăng điểm thân mật
+        """
         try:
-            # Kiểm tra xem có phải là đạo lữ không
+            if not context.guild:
+                embed = discord.Embed(
+                    title="Lỗi",
+                    description="Lệnh này chỉ có thể sử dụng trong server!",
+                    color=0xFF4500
+                )
+                await context.send(embed=embed)
+                return
+
+            # Đọc dữ liệu từ file relationships.json
             with open("database/relationships.json", "r", encoding="utf-8") as f:
                 data = json.load(f)
-            
+
             user_id = str(context.author.id)
-            partner_id = str(partner.id)
-            
-            if user_id not in data["relationships"] or data["relationships"][user_id]["partner"] != partner_id:
+
+            # Kiểm tra xem người dùng có đạo lữ không
+            if user_id not in data["relationships"] or \
+               data["relationships"][user_id]["partner"] == "None":
                 embed = discord.Embed(
                     title="Lỗi",
-                    description="Bạn chỉ có thể sử dụng đan dược cho đạo lữ của mình!",
+                    description="Bạn chưa có đạo lữ!",
                     color=0xFF4500
                 )
-                embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
                 await context.send(embed=embed)
                 return
+
+            partner_id = data["relationships"][user_id]["partner"]
             
-            # Kiểm tra đan dược
-            potion = potion.lower()
-            if potion not in self.love_potions:
+            try:
+                # Lấy thông tin đạo lữ
+                partner = await context.guild.fetch_member(int(partner_id))
+                if not partner:
+                    embed = discord.Embed(
+                        title="Lỗi",
+                        description="Không tìm thấy đạo lữ của bạn trong server này!",
+                        color=0xFF4500
+                    )
+                    await context.send(embed=embed)
+                    return
+            except discord.NotFound:
                 embed = discord.Embed(
                     title="Lỗi",
-                    description="Không tìm thấy đan dược này!",
+                    description="Không tìm thấy đạo lữ của bạn trong server này!",
                     color=0xFF4500
                 )
-                embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
                 await context.send(embed=embed)
                 return
-            
-            potion_info = self.love_potions[potion]
-            
-            # Kiểm tra thời gian chờ
-            last_use = data["relationships"][user_id].get("last_potion_use", 0)
-            current_time = datetime.now().timestamp()
-            
-            if current_time - last_use < potion_info["cooldown"]:
-                remaining_time = potion_info["cooldown"] - (current_time - last_use)
-                hours = int(remaining_time // 3600)
-                minutes = int((remaining_time % 3600) // 60)
-                
-                embed = discord.Embed(
-                    title="Lỗi",
-                    description=f"Bạn cần chờ thêm {hours} giờ {minutes} phút nữa mới có thể sử dụng đan dược!",
-                    color=0xFF4500
-                )
-                embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-                await context.send(embed=embed)
-                return
+
+            # Tính điểm thân mật ngẫu nhiên (500-1000)
+            intimacy_gain = random.randint(500, 1000)
             
             # Cập nhật điểm thân mật
-            await self.update_relationship(user_id, partner_id, potion_info["effect"])
-            
-            # Cập nhật thời gian sử dụng
-            data["relationships"][user_id]["last_potion_use"] = current_time
-            with open("database/relationships.json", "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=4)
-            
-            # Hiển thị kết quả
+            await self.update_relationship(user_id, partner_id, intimacy_gain)
+
+            # Tạo embed thông báo
             embed = discord.Embed(
-                title="Sử Dụng Đan Dược Thành Công",
-                description=f"{context.author.mention} đã sử dụng {potion_info['name']} cho {partner.mention}",
+                title="🎁 Tặng Quà",
                 color=0xFF69B4
             )
-            embed.add_field(
-                name="Hiệu quả",
-                value=f"Độ thân mật tăng thêm {potion_info['effect']:,} điểm!",
-                inline=False
-            )
+            embed.add_field(name="Người Tặng", value=context.author.mention, inline=False)
+            embed.add_field(name="Người Nhận", value=partner.mention, inline=False)
+            embed.add_field(name="Điểm Thân Mật", value=f"+{intimacy_gain} ❤️", inline=False)
             embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
             await context.send(embed=embed)
-            
+
         except Exception as e:
-            self.bot.logger.error(f"Lỗi trong lệnh sudung: {str(e)}")
+            self.bot.logger.error(f"Lỗi trong lệnh songtu: {str(e)}")
             embed = discord.Embed(
                 title="Lỗi",
-                description=f"Có lỗi xảy ra khi sử dụng đan dược: {str(e)}",
+                description=f"Có lỗi xảy ra khi tặng quà: {str(e)}",
                 color=0xFF4500
             )
-            embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             await context.send(embed=embed)
 
 async def setup(bot) -> None:
