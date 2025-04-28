@@ -175,7 +175,6 @@ class SpiritStone(commands.Cog, name="Linh Thạch"):
                     "last_checkin": 0,
                     "inventory": {},
                     "cultivation_points": 0,
-                    "balance": 0
                 }
                 await mongodb.update_user(user_id, user_data)
                 logger.info(f"✅ Đã khởi tạo người dùng mới: {username} ({user_id})")
@@ -241,37 +240,6 @@ class SpiritStone(commands.Cog, name="Linh Thạch"):
         )
         embed.add_field(name="Linh Thạch Nhận Được", value=f"**{reward_amount}**", inline=True)
         embed.add_field(name="Chức Vụ", value=f"**{role_status}**", inline=True)
-        embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        await ctx.send(embed=embed)
-
-    @commands.hybrid_command(
-        name="setup_role_rewards",
-        description="Thiết lập Linh Thạch thưởng cho các vai trò (cần quyền quản lý vai trò)"
-    )
-    @commands.has_permissions(manage_roles=True)
-    async def setup_role_rewards(self, ctx: Context, role: discord.Role, reward_amount: int) -> None:
-        if reward_amount <= 0:
-            embed = discord.Embed(
-                title="Lỗi Thiết Lập",
-                description="Số Linh Thạch thưởng phải lớn hơn 0!",
-                color=0xFF4500
-            )
-            embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            await ctx.send(embed=embed)
-            return
-
-        guild_id = str(ctx.guild.id)
-        role_id = str(role.id)
-
-        await mongodb.update_role_reward(guild_id, role_id, reward_amount)
-
-        embed = discord.Embed(
-            title="Thiết Lập Thành Công",
-            description=f"Đã thiết lập thưởng cho vai trò {role.mention}!",
-            color=0x1E90FF
-        )
-        embed.add_field(name="Vai Trò", value=role.mention, inline=True)
-        embed.add_field(name="Linh Thạch Thưởng", value=f"**{reward_amount}**", inline=True)
         embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         await ctx.send(embed=embed)
 
@@ -470,101 +438,6 @@ class SpiritStone(commands.Cog, name="Linh Thạch"):
                 )
                 embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
                 await ctx.send(embed=embed)
-
-    @commands.hybrid_command(
-        name="dotpha",
-        description="Sử dụng điểm tu vi để đột phá cảnh giới"
-    )
-    async def dotpha(self, context: Context) -> None:
-        user_id = str(context.author.id)
-        await self.ensure_user(user_id, username=context.author.name)
-
-        user = await mongodb.get_user(user_id)
-        if not user:
-            embed = discord.Embed(
-                title="Lỗi Đột Phá",
-                description="Không tìm thấy thông tin người dùng!",
-                color=0xFF4500
-            )
-            embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            await context.send(embed=embed)
-            return
-
-        cultivation_points = user.get("cultivation_points", 0)
-        current_level = user.get("cultivation_level", 0)
-
-        # Tính toán điểm cần thiết cho đột phá
-        points_needed = (current_level + 1) * 1000
-
-        if cultivation_points < points_needed:
-            embed = discord.Embed(
-                title="Đột Phá Thất Bại",
-                description=f"Bạn cần {points_needed:,} điểm tu vi để đột phá!\nHiện tại bạn có: {cultivation_points:,} điểm tu vi",
-                color=0xFF4500
-            )
-            embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            await context.send(embed=embed)
-            return
-
-        # Tính tỷ lệ thành công
-        success_rate = 100 - (current_level * 5)  # Giảm 5% mỗi level
-        success_rate = max(10, success_rate)
-
-        # Thực hiện đột phá
-        if random.randint(1, 100) <= success_rate:
-            # Đột phá thành công
-            new_level = current_level + 1
-            new_points = cultivation_points - points_needed
-
-            await mongodb.update_user(user_id, {
-                "cultivation_level": new_level,
-                "cultivation_points": new_points
-            })
-
-            # Lấy thông tin cảnh giới mới
-            realm, stage, _, color = self.get_cultivation_info(new_level)
-
-            embed = discord.Embed(
-                title="Đột Phá Thành Công!",
-                description=f"Chúc mừng bạn đã đột phá thành công lên **{realm} {stage}**!",
-                color=color
-            )
-            embed.add_field(
-                name="Thông tin đột phá",
-                value=f"Điểm tu vi đã sử dụng: {points_needed:,}\nĐiểm tu vi còn lại: {new_points:,}",
-                inline=False
-            )
-            embed.add_field(
-                name="Tỷ lệ thành công",
-                value=f"{success_rate}%",
-                inline=False
-            )
-        else:
-            # Đột phá thất bại
-            new_points = cultivation_points - (points_needed // 2)  # Mất 50% điểm cần thiết
-
-            await mongodb.update_user(user_id, {
-                "cultivation_points": new_points
-            })
-
-            embed = discord.Embed(
-                title="Đột Phá Thất Bại",
-                description="Đột phá thất bại! Bạn đã mất một nửa số điểm tu vi cần thiết.",
-                color=0xFF4500
-            )
-            embed.add_field(
-                name="Thông tin đột phá",
-                value=f"Điểm tu vi đã mất: {points_needed // 2:,}\nĐiểm tu vi còn lại: {new_points:,}",
-                inline=False
-            )
-            embed.add_field(
-                name="Tỷ lệ thành công",
-                value=f"{success_rate}%",
-                inline=False
-            )
-
-        embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        await context.send(embed=embed)
 
     def get_cultivation_info(self, level: int) -> tuple:
         """Trả về thông tin về cảnh giới và giai đoạn tu luyện"""

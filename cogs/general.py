@@ -142,6 +142,12 @@ class General(commands.Cog, name="general"):
             value=f"**{success_rate}%**",
             inline=True
         )
+
+        embed.add_field(
+            name="Linh thạch",
+            value=f"**{user['spirit_stones']}**",
+            inline=True
+        )
         
         embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         await context.send(embed=embed)
@@ -279,7 +285,6 @@ class General(commands.Cog, name="general"):
                     "last_checkin": 0,
                     "inventory": {},
                     "cultivation_points": 0,
-                    "balance": 0
                 }
                 await mongodb.update_user(user_id, user_data)
             elif username and user["username"] != username:

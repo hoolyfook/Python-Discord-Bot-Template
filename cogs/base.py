@@ -8,16 +8,6 @@ class BaseCog(commands.Cog):
         self.bot = bot
         self.category = category  # Thêm category để nhóm các lệnh
 
-    # Đảm bảo người dùng tồn tại trong cơ sở dữ liệu
-    async def ensure_user(self, user_id: str, username: str = None) -> None:
-        async with aiosqlite.connect("database/database.db") as db:
-            async with db.execute("SELECT user_id FROM users WHERE user_id = ?", (user_id,)) as cursor:
-                row = await cursor.fetchone()
-            if not row:
-                await db.execute("INSERT INTO users (user_id, username, balance, last_daily) VALUES (?, ?, 0, ?)",
-                                 (user_id, username, int(time.time())))
-                await db.commit()
-
     # Xử lý lỗi của các lệnh
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
