@@ -53,6 +53,22 @@ class LoggingFormatter(logging.Formatter):
         formatter = logging.Formatter(format, "%Y-%m-%d %H:%M:%S", style="{")
         return formatter.format(record)
 
+logger = logging.getLogger("discord_bot")
+
+# Console handler
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(LoggingFormatter())
+# File handler
+file_handler = logging.FileHandler(filename="discord.log", encoding="utf-8", mode="w")
+file_handler_formatter = logging.Formatter(
+    "[{asctime}] [{levelname:<8}] {name}: {message}", "%Y-%m-%d %H:%M:%S", style="{"
+)
+file_handler.setFormatter(file_handler_formatter)
+
+# Add the handlers
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
+
 class DiscordBot(commands.Bot):
     def __init__(self) -> None:
         super().__init__(
@@ -277,14 +293,11 @@ class DiscordBot(commands.Bot):
         name="diemdanh",
         description="Điểm danh hàng ngày để nhận Linh Thạch theo chức vụ"
     )
-    @commands.cooldown(1, 86400, commands.BucketType.user)
+    @commands.cooldown(1, 43200, commands.BucketType.user)
     async def diemdanh(self, ctx: Context) -> None:
         if ctx.guild is None:
             await ctx.send("❌ Lệnh này chỉ dùng được trong server, không dùng được trong DM!")
             return
-        user_id = str(ctx.author.id)
-        guild_id = str(ctx.guild.id)
-        # ... phần còn lại giữ nguyên ...
 
 bot = DiscordBot()
 

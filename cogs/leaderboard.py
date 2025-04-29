@@ -1,12 +1,25 @@
 import discord
 from discord.ext import commands
 from discord import Embed
-from database.mongodb import mongodb
+from database.mongodb import MongoDB
 from datetime import datetime
+from utils.constants import CULTIVATION_LEVELS, LEVEL_REQUIREMENTS
 
-class Leaderboard(commands.Cog, name="Bảng Xếp Hạng"):
+class Leaderboard(commands.Cog, name="Bảng xếp hạng"):
     def __init__(self, bot) -> None:
         self.bot = bot
+        self.mongodb = MongoDB()
+        self.cultivation_levels = CULTIVATION_LEVELS
+        self.level_requirements = LEVEL_REQUIREMENTS
+
+    def get_cultivation_info(self, level):
+        level_info = self.cultivation_levels.get(level, {
+            "name": "Unknown",
+            "color": 0xAAAAAA,
+            "description": "Cảnh giới không xác định",
+            "tho_nguyen": "Unknown"
+        })
+        return level_info["name"]
 
     @commands.hybrid_command(
         name="diachubang",
@@ -18,7 +31,7 @@ class Leaderboard(commands.Cog, name="Bảng Xếp Hạng"):
         Hiển thị top 10 người giàu nhất dựa trên số linh thạch
         """
         # Lấy top 10 người dùng có nhiều linh thạch nhất
-        top_users = await mongodb.get_top_users(10, sort_by="spirit_stones")
+        top_users = await self.mongodb.get_top_users(10, sort_by="spirit_stones")
         
         if not top_users:
             embed = discord.Embed(
@@ -56,7 +69,7 @@ class Leaderboard(commands.Cog, name="Bảng Xếp Hạng"):
         Hiển thị top 10 người khai thác nhiều nhất
         """
         # Lấy top 10 người dùng có số lần khai thác nhiều nhất
-        top_users = await mongodb.get_top_users(10, sort_by="mining_attempts")
+        top_users = await self.mongodb.get_top_users(10, sort_by="mining_attempts")
         
         if not top_users:
             embed = discord.Embed(
@@ -94,7 +107,7 @@ class Leaderboard(commands.Cog, name="Bảng Xếp Hạng"):
         Hiển thị top 10 người có cấp độ tu luyện cao nhất
         """
         # Lấy top 10 người dùng có cấp độ tu luyện cao nhất
-        top_users = await mongodb.get_top_users(10, sort_by="cultivation_level")
+        top_users = await self.mongodb.get_top_users(10, sort_by="cultivation_level")
         
         if not top_users:
             embed = discord.Embed(

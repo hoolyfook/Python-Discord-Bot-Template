@@ -1,12 +1,26 @@
 import discord
 from discord.ext import commands
 from discord import Embed
-from database.mongodb import mongodb
+from database.mongodb import MongoDB
+from datetime import datetime
+from utils.constants import CULTIVATION_LEVELS, LEVEL_REQUIREMENTS
 import random
 
-class Gamble(commands.Cog, name="Cờ Bạc"):
+class Gamble(commands.Cog, name="Cờ bạc"):
     def __init__(self, bot) -> None:
         self.bot = bot
+        self.mongodb = MongoDB()
+        self.cultivation_levels = CULTIVATION_LEVELS
+        self.level_requirements = LEVEL_REQUIREMENTS
+
+    def get_cultivation_info(self, level):
+        level_info = self.cultivation_levels.get(level, {
+            "name": "Unknown",
+            "color": 0xAAAAAA,
+            "description": "Cảnh giới không xác định",
+            "tho_nguyen": "Unknown"
+        })
+        return level_info["name"]
 
     @commands.hybrid_command(
         name="taixiu",
@@ -30,7 +44,7 @@ class Gamble(commands.Cog, name="Cờ Bạc"):
             return
 
         user_id = str(context.author.id)
-        user = await mongodb.get_user(user_id)
+        user = await self.mongodb.get_user(user_id)
         
         if not user:
             await context.send("❌ Bạn chưa có dữ liệu người chơi!")
@@ -61,7 +75,7 @@ class Gamble(commands.Cog, name="Cờ Bạc"):
             result_text = "❌ Thua"
 
         # Update user's spirit stones
-        await mongodb.update_user(user_id, {
+        await self.mongodb.update_user(user_id, {
             "spirit_stones": new_spirit_stones
         })
 

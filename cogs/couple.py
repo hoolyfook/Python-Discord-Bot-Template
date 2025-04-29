@@ -7,12 +7,17 @@ import json
 from datetime import datetime
 import random
 import asyncio
+from database.mongodb import MongoDB
+from utils.constants import CULTIVATION_LEVELS, LEVEL_REQUIREMENTS
 
 class Couple(commands.Cog, name="couple"):
     def __init__(self, bot) -> None:
         self.bot = bot
         self._original_help_command = bot.help_command
         bot.help_command = None
+        self.mongodb = MongoDB()
+        self.cultivation_levels = CULTIVATION_LEVELS
+        self.level_requirements = LEVEL_REQUIREMENTS
 
     def cog_unload(self):
         self.bot.help_command = self._original_help_command

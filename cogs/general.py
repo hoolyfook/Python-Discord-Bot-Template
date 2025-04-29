@@ -5,7 +5,8 @@ from discord.ext.commands import Context
 from discord import Embed, Member
 import aiosqlite
 from datetime import datetime
-from database.mongodb import mongodb
+from database.mongodb import MongoDB
+from utils.constants import CULTIVATION_LEVELS, LEVEL_REQUIREMENTS
 
 class General(commands.Cog, name="Tu Tiên"):
     def __init__(self, bot) -> None:
@@ -18,27 +19,9 @@ class General(commands.Cog, name="Tu Tiên"):
             name="Remove spoilers", callback=self.remove_spoilers
         )
         self.bot.tree.add_command(self.context_menu_message)
-        self.cultivation_levels = [
-            # (Tên, [Các kỳ nhỏ/tầng], Thọ nguyên, Màu sắc, Mô tả)
-            ("Phàm Nhân", [], "70-100", 0xAAAAAA, "Người thường, chưa tu luyện."),
-            ("Luyện Khí", [f"{i} tầng" for i in range(1, 10)], "120-150", 0xCCCCCC, "Bước đầu hấp thu linh khí."),
-            ("Trúc Cơ", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "200-300", 0x00FF00, "Xây dựng nền tảng tu luyện."),
-            ("Kim Đan", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "500-800", 0xFFD700, "Kết tinh linh lực thành kim đan."),
-            ("Nguyên Anh", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "1000-1500", 0xFF4500, "Ngưng tụ nguyên anh."),
-            ("Hóa Thần", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "2000-3000", 0x9932CC, "Hóa thần thành tiên."),
-            ("Luyện Hư", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "4000-6000", 0x4169E1, "Luyện hư thành thực."),
-            ("Hợp Thể", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "8000-10000", 0xFF0000, "Hợp nhất với thiên địa."),
-            ("Đại Thừa", ["Sơ Kỳ", "Trung Kỳ", "Hậu Kỳ", "Viên Mãn"], "20000-30000", 0xFFFFFF, "Đạt đến cảnh giới tối cao."),
-            ("Phi Thăng", ["Qua Kiếp Độ"], "", 0x00FFFF, "Độ kiếp phi thăng."),
-            # Tiên Nhân trở lên
-            ("Chân Tiên", [], "Vô hạn", 0xFFD700, "Bước vào hàng ngũ tiên nhân."),
-            ("Huyền Tiên", [], "Vô hạn", 0xBEBEFE, "Cảnh giới cao hơn Chân Tiên."),
-            ("Kim Tiên", [], "Vô hạn", 0xFFD700, "Cảnh giới Kim Tiên."),
-            ("Thái Ất Chân Tiên", [], "Vô hạn", 0xFF00FF, "Cảnh giới Thái Ất Chân Tiên."),
-            ("Đại La Kim Tiên", [], "Vô hạn", 0x00FF00, "Cảnh giới Đại La Kim Tiên."),
-            ("Thánh Nhân", [], "Vô hạn", 0xFF0000, "Cảnh giới Thánh Nhân, tối thượng.")
-        ]
-        self.level_requirements = [1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000]
+        self.mongodb = MongoDB()
+        self.cultivation_levels = CULTIVATION_LEVELS
+        self.level_requirements = LEVEL_REQUIREMENTS
 
     # Message context menu command
     async def remove_spoilers(
@@ -92,7 +75,7 @@ class General(commands.Cog, name="Tu Tiên"):
         user_id = str(context.author.id)
         await self.ensure_user(user_id, username=context.author.name)
 
-        user = await mongodb.get_user(user_id)
+        user = await self.mongodb.get_user(user_id)
         if not user:
             embed = discord.Embed(
                 title="Lỗi Hồ Sơ",
@@ -154,29 +137,20 @@ class General(commands.Cog, name="Tu Tiên"):
 
     def get_cultivation_info(self, level: int):
         # Tính tổng số bậc nhỏ cho từng cảnh giới
-        index = 0
-        for name, sublevels, tho_nguyen, color, desc in self.cultivation_levels:
-            num_sub = len(sublevels) if sublevels else 1
-            if level < index + num_sub:
-                sub = sublevels[level - index] if sublevels else ""
-                return {
-                    "realm": name,
-                    "sublevel": sub,
-                    "desc": desc,
-                    "color": color,
-                    "tho_nguyen": tho_nguyen,
-                    "level_name": f"{name} {sub}" if sub else name
-                }
-            index += num_sub
-        # Nếu vượt max, trả về cấp cuối cùng
-        name, sublevels, tho_nguyen, color, desc = self.cultivation_levels[-1]
+        level_info = self.cultivation_levels.get(level, {
+            "name": "Unknown",
+            "color": 0xAAAAAA,
+            "description": "Cảnh giới không xác định",
+            "tho_nguyen": "Unknown"
+        })
+        
         return {
-            "realm": name,
+            "realm": level_info["name"],
             "sublevel": "",
-            "desc": desc,
-            "color": color,
-            "tho_nguyen": tho_nguyen,
-            "level_name": name
+            "desc": level_info["description"],
+            "color": level_info["color"],
+            "tho_nguyen": level_info["tho_nguyen"],
+            "level_name": level_info["name"]
         }
 
     def get_points_needed(self, level: int):
@@ -237,7 +211,7 @@ class General(commands.Cog, name="Tu Tiên"):
         Hiển thị bảng xếp hạng top 10 người mạnh nhất dựa theo cảnh giới
         """
         # Lấy top 10 người dùng có cảnh giới cao nhất
-        top_users = await mongodb.get_top_users(10)
+        top_users = await self.mongodb.get_top_users(10)
         
         if not top_users:
             embed = discord.Embed(
@@ -273,7 +247,7 @@ class General(commands.Cog, name="Tu Tiên"):
     async def ensure_user(self, user_id: str, username: str = None) -> None:
         """Đảm bảo người dùng tồn tại trong database"""
         try:
-            user = await mongodb.get_user(user_id)
+            user = await self.mongodb.get_user(user_id)
             if not user:
                 # Khởi tạo người dùng mới
                 user_data = {
@@ -286,10 +260,10 @@ class General(commands.Cog, name="Tu Tiên"):
                     "inventory": {},
                     "cultivation_points": 0,
                 }
-                await mongodb.update_user(user_id, user_data)
+                await self.mongodb.update_user(user_id, user_data)
             elif username and user["username"] != username:
                 # Cập nhật username nếu thay đổi
-                await mongodb.update_user(user_id, {"username": username})
+                await self.mongodb.update_user(user_id, {"username": username})
         except Exception as e:
             print(f"Error ensuring user: {str(e)}")
             raise

@@ -1,14 +1,18 @@
 import discord
 from discord.ext import commands
 from discord import Embed
-from database.mongodb import mongodb
+from database.mongodb import MongoDB
 import random
 import json
 from datetime import datetime
+from utils.constants import CULTIVATION_LEVELS, LEVEL_REQUIREMENTS
 
-class Mining(commands.Cog, name="Khai thác thạch"):
+class Mining(commands.Cog, name="Khai thác"):
     def __init__(self, bot) -> None:
         self.bot = bot
+        self.mongodb = MongoDB()
+        self.cultivation_levels = CULTIVATION_LEVELS
+        self.level_requirements = LEVEL_REQUIREMENTS
         self.mining_rates = {
             0: {"success_rate": 0.05, "attempts": 3, "cooldown": 3600},  # Thường dân
             1: {"success_rate": 0.10, "attempts": 4, "cooldown": 2700},  # Luyện Khí
@@ -33,8 +37,17 @@ class Mining(commands.Cog, name="Khai thác thạch"):
             8: {"min": 1000000, "max": 5000000} # Thần Phẩm (Tiên Nhân)
         }
 
+    def get_cultivation_info(self, level):
+        level_info = self.cultivation_levels.get(level, {
+            "name": "Unknown",
+            "color": 0xAAAAAA,
+            "description": "Cảnh giới không xác định",
+            "tho_nguyen": "Unknown"
+        })
+        return level_info["name"]
+
     async def ensure_user(self, user_id: str, username: str = None) -> None:
-        user = await mongodb.get_user(user_id)
+        user = await self.mongodb.get_user(user_id)
         if not user:
             user_data = {
                 "_id": user_id,
@@ -48,9 +61,9 @@ class Mining(commands.Cog, name="Khai thác thạch"):
                 "mining_attempts": 0,
                 "last_mining": 0
             }
-            await mongodb.update_user(user_id, user_data)
+            await self.mongodb.update_user(user_id, user_data)
         elif username and user.get("username") != username:
-            await mongodb.update_user(user_id, {"username": username})
+            await self.mongodb.update_user(user_id, {"username": username})
 
     @commands.hybrid_command(
         name="khaithac",
@@ -62,7 +75,7 @@ class Mining(commands.Cog, name="Khai thác thạch"):
         """
         user_id = str(ctx.author.id)
         await self.ensure_user(user_id, username=ctx.author.name)
-        user = await mongodb.get_user(user_id)
+        user = await self.mongodb.get_user(user_id)
         
         # Kiểm tra thời gian chờ
         current_time = datetime.now().timestamp()
@@ -77,7 +90,7 @@ class Mining(commands.Cog, name="Khai thác thạch"):
             
         # Kiểm tra tỷ lệ thành công
         if random.random() > 0.5:
-            await mongodb.update_user(user_id, {
+            await self.mongodb.update_user(user_id, {
                 "mining_attempts": mining_attempts + 1,
                 "last_mining": current_time
             })
@@ -94,7 +107,7 @@ class Mining(commands.Cog, name="Khai thác thạch"):
             spirit_stones_found += bonus_stones
         
         # Cập nhật dữ liệu người dùng
-        await mongodb.update_user(user_id, {
+        await self.mongodb.update_user(user_id, {
             "spirit_stones": user.get("spirit_stones", 0) + spirit_stones_found,
             "mining_attempts": mining_attempts + 1,
             "last_mining": current_time

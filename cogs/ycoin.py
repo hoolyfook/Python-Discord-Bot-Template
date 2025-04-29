@@ -8,157 +8,18 @@ from datetime import datetime
 from database.mongodb import mongodb
 import logging
 import aiosqlite
+from database.mongodb import MongoDB
+from utils.constants import CULTIVATION_LEVELS, LEVEL_REQUIREMENTS
 
 logger = logging.getLogger(__name__)
 
 class SpiritStone(commands.Cog, name="Linh Thạch"):
     def __init__(self, bot) -> None:
         self.bot = bot
-        self.cultivation_levels = {
-            "Luyện Khí": {
-                "levels": {
-                    "Sơ Kỳ": 0,
-                    "Trung Kỳ": 1,
-                    "Hậu Kỳ": 2,
-                    "Đại Viên Mãn": 3
-                },
-                "description": "Giai đoạn đầu của tu luyện, luyện khí thành linh lực",
-                "color": 0x00FF00
-            },
-            "Trúc Cơ": {
-                "levels": {
-                    "Sơ Kỳ": 4,
-                    "Trung Kỳ": 5,
-                    "Hậu Kỳ": 6,
-                    "Đại Viên Mãn": 7
-                },
-                "description": "Xây dựng nền tảng tu luyện vững chắc",
-                "color": 0x00FFFF
-            },
-            "Kim Đan": {
-                "levels": {
-                    "Sơ Kỳ": 8,
-                    "Trung Kỳ": 9,
-                    "Hậu Kỳ": 10,
-                    "Đại Viên Mãn": 11
-                },
-                "description": "Kết tinh linh lực thành kim đan",
-                "color": 0xFFD700
-            },
-            "Nguyên Anh": {
-                "levels": {
-                    "Sơ Kỳ": 12,
-                    "Trung Kỳ": 13,
-                    "Hậu Kỳ": 14,
-                    "Đại Viên Mãn": 15
-                },
-                "description": "Nuôi dưỡng nguyên thần, hình thành nguyên anh",
-                "color": 0xFF4500
-            },
-            "Hóa Thần": {
-                "levels": {
-                    "Sơ Kỳ": 16,
-                    "Trung Kỳ": 17,
-                    "Hậu Kỳ": 18,
-                    "Đại Viên Mãn": 19
-                },
-                "description": "Hóa thần thành tiên, đạt đến cảnh giới cao hơn",
-                "color": 0x9932CC
-            },
-            "Luyện Hư": {
-                "levels": {
-                    "Sơ Kỳ": 20,
-                    "Trung Kỳ": 21,
-                    "Hậu Kỳ": 22,
-                    "Đại Viên Mãn": 23
-                },
-                "description": "Luyện hư thành thực, đạt đến cảnh giới tiên nhân",
-                "color": 0x4169E1
-            },
-            "Hợp Thể": {
-                "levels": {
-                    "Sơ Kỳ": 24,
-                    "Trung Kỳ": 25,
-                    "Hậu Kỳ": 26,
-                    "Đại Viên Mãn": 27
-                },
-                "description": "Hợp nhất với thiên địa, đạt đến cảnh giới đại năng",
-                "color": 0xFF0000
-            },
-            "Đại Thừa": {
-                "levels": {
-                    "Sơ Kỳ": 28,
-                    "Trung Kỳ": 29,
-                    "Hậu Kỳ": 30,
-                    "Đại Viên Mãn": 31
-                },
-                "description": "Đạt đến cảnh giới tối cao, một bước thành tiên",
-                "color": 0xFFFFFF
-            },
-            "Bán Đế": {
-                "levels": {
-                    "Sơ Kỳ": 32,
-                    "Trung Kỳ": 33,
-                    "Hậu Kỳ": 34,
-                    "Đại Viên Mãn": 35
-                },
-                "description": "Đạt đến cảnh giới bán đế, một chân đã bước vào thế giới đế giới",
-                "color": 0xFF00FF
-            },
-            "Đại Đế": {
-                "levels": {
-                    "Sơ Kỳ": 36,
-                    "Trung Kỳ": 37,
-                    "Hậu Kỳ": 38,
-                    "Đại Viên Mãn": 39
-                },
-                "description": "Đạt đến cảnh giới đại đế, chân chính bước vào thế giới đế giới",
-                "color": 0x000000
-            }
-        }
-        self.level_requirements = {
-            0: 1000,    # Luyện Khí Sơ Kỳ
-            1: 2000,    # Luyện Khí Trung Kỳ
-            2: 4000,    # Luyện Khí Hậu Kỳ
-            3: 8000,    # Luyện Khí Đại Viên Mãn
-            4: 16000,   # Trúc Cơ Sơ Kỳ
-            5: 32000,   # Trúc Cơ Trung Kỳ
-            6: 64000,   # Trúc Cơ Hậu Kỳ
-            7: 128000,  # Trúc Cơ Đại Viên Mãn
-            8: 256000,  # Kim Đan Sơ Kỳ
-            9: 512000,  # Kim Đan Trung Kỳ
-            10: 1024000, # Kim Đan Hậu Kỳ
-            11: 2048000, # Kim Đan Đại Viên Mãn
-            12: 4096000, # Nguyên Anh Sơ Kỳ
-            13: 8192000, # Nguyên Anh Trung Kỳ
-            14: 16384000, # Nguyên Anh Hậu Kỳ
-            15: 32768000, # Nguyên Anh Đại Viên Mãn
-            16: 65536000, # Hóa Thần Sơ Kỳ
-            17: 131072000, # Hóa Thần Trung Kỳ
-            18: 262144000, # Hóa Thần Hậu Kỳ
-            19: 524288000, # Hóa Thần Đại Viên Mãn
-            20: 1048576000, # Luyện Hư Sơ Kỳ
-            21: 2097152000, # Luyện Hư Trung Kỳ
-            22: 4194304000, # Luyện Hư Hậu Kỳ
-            23: 8388608000, # Luyện Hư Đại Viên Mãn
-            24: 16777216000, # Hợp Thể Sơ Kỳ
-            25: 33554432000, # Hợp Thể Trung Kỳ
-            26: 67108864000, # Hợp Thể Hậu Kỳ
-            27: 134217728000, # Hợp Thể Đại Viên Mãn
-            28: 268435456000, # Đại Thừa Sơ Kỳ
-            29: 536870912000, # Đại Thừa Trung Kỳ
-            30: 1073741824000, # Đại Thừa Hậu Kỳ
-            31: 2147483648000, # Đại Thừa Đại Viên Mãn
-            32: 4294967296000, # Bán Đế Sơ Kỳ
-            33: 8589934592000, # Bán Đế Trung Kỳ
-            34: 17179869184000, # Bán Đế Hậu Kỳ
-            35: 34359738368000, # Bán Đế Đại Viên Mãn
-            36: 68719476736000, # Đại Đế Sơ Kỳ
-            37: 137438953472000, # Đại Đế Trung Kỳ
-            38: 274877906944000, # Đại Đế Hậu Kỳ
-            39: 549755813888000  # Đại Đế Đại Viên Mãn
-        }
+        self.cultivation_levels = CULTIVATION_LEVELS
+        self.level_requirements = LEVEL_REQUIREMENTS
         self.default_role_reward = 100
+        self.mongodb = MongoDB()
 
     async def ensure_user(self, user_id: str, username: str = None) -> None:
         """Đảm bảo người dùng tồn tại trong database"""
@@ -456,13 +317,83 @@ class SpiritStone(commands.Cog, name="Linh Thạch"):
                 embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
                 await ctx.send(embed=embed)
 
-    def get_cultivation_info(self, level: int) -> tuple:
-        """Trả về thông tin về cảnh giới và giai đoạn tu luyện"""
-        for realm, info in self.cultivation_levels.items():
-            for stage, stage_level in info["levels"].items():
-                if level == stage_level:
-                    return realm, stage, info["description"], info["color"]
-        return "Không xác định", "Không xác định", "Không có mô tả", 0x000000
+    @commands.hybrid_command(
+        name="hoso",
+        aliases=["profile", "info"],
+        description="Xem hồ sơ tu luyện của bản thân"
+    )
+    async def hoso(self, context: commands.Context) -> None:
+        """
+        Hiển thị hồ sơ tu luyện của người dùng
+        """
+        user_id = str(context.author.id)
+        await self.ensure_user(user_id, username=context.author.name)
+        
+        user = await mongodb.get_user(user_id)
+        if not user:
+            embed = discord.Embed(
+                title="Lỗi",
+                description="Không tìm thấy thông tin người dùng!",
+                color=0xFF4500
+            )
+            embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            await context.send(embed=embed)
+            return
+
+        current_level = user.get("cultivation_level", 0)
+        current_points = user.get("cultivation_points", 0)
+        spirit_stones = user.get("spirit_stones", 0)
+        mining_attempts = user.get("mining_attempts", 0)
+        failed_rob_attempts = user.get("failed_rob_attempts", 0)
+
+        # Lấy thông tin cấp độ hiện tại
+        current_level_name = self.get_cultivation_info(current_level)
+        
+        # Tính điểm tu vi cần thiết cho cấp độ tiếp theo
+        next_level = current_level + 1
+        required_points = self.level_requirements.get(next_level, 0)
+        points_needed = max(0, required_points - current_points)
+        next_level_name = self.get_cultivation_info(next_level)
+
+        embed = discord.Embed(
+            title=f"Hồ Sơ Tu Luyện - {context.author.name}",
+            description=f"**Cấp độ hiện tại:** {current_level_name}",
+            color=0x1E90FF
+        )
+
+        embed.add_field(
+            name="📊 Thông Tin Tu Luyện",
+            value=f"**Điểm tu vi hiện tại:** {current_points:,}\n"
+                  f"**Cấp độ tiếp theo:** {next_level_name}\n"
+                  f"**Điểm tu vi cần thiết:** {required_points:,}\n"
+                  f"**Còn thiếu:** {points_needed:,}",
+            inline=False
+        )
+
+        embed.add_field(
+            name="💰 Tài Nguyên",
+            value=f"**Linh Thạch:** {spirit_stones:,} 🪨",
+            inline=False
+        )
+
+        embed.add_field(
+            name="📈 Thống Kê",
+            value=f"**Số lần khai thác:** {mining_attempts:,}\n"
+                  f"**Số lần cướp thất bại:** {failed_rob_attempts}/3",
+            inline=False
+        )
+
+        embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        await context.send(embed=embed)
+
+    def get_cultivation_info(self, level):
+        level_info = self.cultivation_levels.get(level, {
+            "name": "Unknown",
+            "color": 0xAAAAAA,
+            "description": "Cảnh giới không xác định",
+            "tho_nguyen": "Unknown"
+        })
+        return level_info["name"]
 
 async def setup(bot) -> None:
     await bot.add_cog(SpiritStone(bot))

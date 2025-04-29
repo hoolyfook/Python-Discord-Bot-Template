@@ -1,11 +1,26 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
+from discord import Embed
+from database.mongodb import MongoDB
 from datetime import datetime
+from utils.constants import CULTIVATION_LEVELS, LEVEL_REQUIREMENTS
 
-class Help(commands.Cog, name="help"):
+class Help(commands.Cog, name="Trợ giúp"):
     def __init__(self, bot) -> None:
         self.bot = bot
+        self.mongodb = MongoDB()
+        self.cultivation_levels = CULTIVATION_LEVELS
+        self.level_requirements = LEVEL_REQUIREMENTS
+
+    def get_cultivation_info(self, level):
+        level_info = self.cultivation_levels.get(level, {
+            "name": "Unknown",
+            "color": 0xAAAAAA,
+            "description": "Cảnh giới không xác định",
+            "tho_nguyen": "Unknown"
+        })
+        return level_info["name"]
 
     @commands.hybrid_command(
         name="help",

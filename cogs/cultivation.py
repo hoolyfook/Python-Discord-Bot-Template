@@ -1,13 +1,17 @@
 import discord
 from discord.ext import commands
 from discord import Embed
-from database.mongodb import mongodb
+from database.mongodb import MongoDB
 import random
 from datetime import datetime
+from utils.constants import CULTIVATION_LEVELS, LEVEL_REQUIREMENTS
 
 class Cultivation(commands.Cog, name="Tu luyện"):
     def __init__(self, bot) -> None:
         self.bot = bot
+        self.mongodb = MongoDB()
+        self.cultivation_levels = CULTIVATION_LEVELS
+        self.level_requirements = LEVEL_REQUIREMENTS
         self.levels = {
             # Luyện Khí
             0: {"name": "Luyện Khí tầng 1 ", "points_required": 1000},
@@ -85,7 +89,7 @@ class Cultivation(commands.Cog, name="Tu luyện"):
         Thử đột phá lên cấp độ tu luyện cao hơn
         """
         user_id = str(context.author.id)
-        user = await mongodb.get_user(user_id)
+        user = await self.mongodb.get_user(user_id)
         
         if not user:
             await context.send("❌ Bạn chưa có dữ liệu tu luyện!")
@@ -106,7 +110,7 @@ class Cultivation(commands.Cog, name="Tu luyện"):
         
         if random.random() * 100 <= success_rate:
             # Đột phá thành công
-            await mongodb.update_user(user_id, {
+            await self.mongodb.update_user(user_id, {
                 "cultivation_level": next_level,
                 "cultivation_points": 0
             })
@@ -139,7 +143,7 @@ class Cultivation(commands.Cog, name="Tu luyện"):
             await context.send(embed=embed)
         else:
             # Đột phá thất bại
-            await mongodb.update_user(user_id, {
+            await self.mongodb.update_user(user_id, {
                 "cultivation_points": 0
             })
             
@@ -153,8 +157,13 @@ class Cultivation(commands.Cog, name="Tu luyện"):
             await context.send(embed=embed)
 
     def get_cultivation_info(self, level):
-        info = self.levels.get(level, {"name": "Unknown", "points_required": 0})
-        return (info["name"], f"({info['points_required']:,})")
+        level_info = self.cultivation_levels.get(level, {
+            "name": "Unknown",
+            "color": 0xAAAAAA,
+            "description": "Cảnh giới không xác định",
+            "tho_nguyen": "Unknown"
+        })
+        return (level_info["name"], f"({self.level_requirements.get(level, 0):,})")
 
 async def setup(bot) -> None:
     await bot.add_cog(Cultivation(bot)) 
