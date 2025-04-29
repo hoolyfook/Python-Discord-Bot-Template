@@ -69,10 +69,6 @@ class Mining(commands.Cog, name="Khai thác thạch"):
         last_mining = user.get("last_mining", 0)
         mining_attempts = user.get("mining_attempts", 0)
         
-        if mining_attempts >= 1000:
-            await ctx.send("❌ Bạn đã sử dụng hết số lần khai thác hôm nay!")
-            return
-            
         if current_time - last_mining < 1:
             remaining_time = 1 - (current_time - last_mining)
             seconds = int(remaining_time)
@@ -91,6 +87,12 @@ class Mining(commands.Cog, name="Khai thác thạch"):
         # Tính toán số Linh Thạch nhận được
         spirit_stones_found = random.randint(100, 500)
         
+        # Kiểm tra nếu đã khai thác đủ 100 lần để nhận thưởng
+        bonus_stones = 0
+        if (mining_attempts + 1) % 100 == 0:
+            bonus_stones = 1000
+            spirit_stones_found += bonus_stones
+        
         # Cập nhật dữ liệu người dùng
         await mongodb.update_user(user_id, {
             "spirit_stones": user.get("spirit_stones", 0) + spirit_stones_found,
@@ -104,7 +106,15 @@ class Mining(commands.Cog, name="Khai thác thạch"):
             description=f"Bạn đã tìm thấy {spirit_stones_found} Linh Thạch <:linhthachydon:1366455607812427807>",
             color=0x00FF00
         )
-        embed.add_field(name="Số lần còn lại", value=f"{1000 - (mining_attempts + 1)}", inline=True)
+        
+        if bonus_stones > 0:
+            embed.add_field(
+                name="🎉 Phần thưởng đặc biệt!",
+                value=f"Chúc mừng bạn đã khai thác đủ 100 lần!\nNhận thêm {bonus_stones} Linh Thạch!",
+                inline=False
+            )
+            
+        embed.add_field(name="Số lần khai thác", value=f"{mining_attempts + 1}", inline=True)
         await ctx.send(embed=embed)
 
 async def setup(bot) -> None:

@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import Embed
 from database.mongodb import mongodb
 import random
+from datetime import datetime
 
 class Cultivation(commands.Cog, name="Tu luyện"):
     def __init__(self, bot) -> None:
@@ -99,13 +100,9 @@ class Cultivation(commands.Cog, name="Tu luyện"):
             
         next_level = current_level + 1
         required_points = self.levels[next_level]["points_required"]
-        
-        if current_points < required_points:
-            await context.send(f"❌ Bạn cần {required_points:,} điểm tu vi để đột phá lên cấp {next_level} ({self.levels[next_level]['name']})!")
-            return
             
         # Tính tỷ lệ thành công dựa trên tỷ lệ điểm tu vi
-        success_rate = min(100, (current_points / required_points) * 100)
+        success_rate = min(100, (current_points / required_points) * 100) - 1
         
         if random.random() * 100 <= success_rate:
             # Đột phá thành công
@@ -114,13 +111,31 @@ class Cultivation(commands.Cog, name="Tu luyện"):
                 "cultivation_points": 0
             })
             
+            # Lấy thông tin cấp độ mới
+            new_level_info = self.get_cultivation_info(next_level)
+            next_level_required = self.levels.get(next_level + 1, {"points_required": 0})["points_required"]
+
             embed = Embed(
                 title="🎉 Đột Phá Thành Công!",
-                description=f"Chúc mừng {context.author.mention} đã đột phá thành công lên cấp độ {next_level} ({self.levels[next_level]['name']})!",
+                description=f"Chúc mừng {context.author.mention} đã đột phá thành công lên cấp độ ({new_level_info[0]})!",
                 color=0x00FF00
             )
-            embed.add_field(name="Cấp độ mới", value=f"{next_level} ({self.levels[next_level]['name']})", inline=False)
-            embed.add_field(name="Điểm tu vi", value="0 (đã reset)", inline=False)
+            embed.add_field(
+                name="Cấp độ mới",
+                value=f"({new_level_info[0]})",
+                inline=False
+            )
+            embed.add_field(
+                name="Điểm tu vi",
+                value="0",
+                inline=False
+            )
+            embed.add_field(
+                name="Điểm tu vi cần cho cấp tiếp theo",
+                value=f"{next_level_required:,}",
+                inline=False
+            )
+            embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             await context.send(embed=embed)
         else:
             # Đột phá thất bại
@@ -136,6 +151,10 @@ class Cultivation(commands.Cog, name="Tu luyện"):
             embed.add_field(name="Điểm tu vi còn lại", value=f"{current_points - required_points:,}", inline=False)
             embed.add_field(name="Lời khuyên", value="Hãy tích lũy thêm điểm tu vi và thử lại sau!", inline=False)
             await context.send(embed=embed)
+
+    def get_cultivation_info(self, level):
+        info = self.levels.get(level, {"name": "Unknown", "points_required": 0})
+        return (info["name"], f"({info['points_required']:,})")
 
 async def setup(bot) -> None:
     await bot.add_cog(Cultivation(bot)) 

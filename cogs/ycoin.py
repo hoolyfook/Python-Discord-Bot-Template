@@ -327,7 +327,7 @@ class SpiritStone(commands.Cog, name="Linh Thạch"):
         name="cuop",
         description="Cướp Linh Thạch từ người khác"
     )
-    @commands.cooldown(1, 300, commands.BucketType.user)  # 5 phút cooldown
+    @commands.cooldown(1, 10, commands.BucketType.user)  # 5 phút cooldown
     async def rob(self, ctx: Context) -> None:
         robber_id = str(ctx.author.id)
         await self.ensure_user(robber_id, username=ctx.author.name)
@@ -446,7 +446,11 @@ class SpiritStone(commands.Cog, name="Linh Thạch"):
                 })
                 embed = discord.Embed(
                     title="Cướp Thất Bại",
-                    description=f"Cướp thất bại! ({failed_attempts}/3)",
+                    description=f"Cướp thất bại!({failed_attempts}/3)! Yếu còn ra gió!",
+                    color=0xFF4500
+                )
+                embed = discord.Embed(
+                    description=f"Targer: <@{robber_id}>",
                     color=0xFF4500
                 )
                 embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

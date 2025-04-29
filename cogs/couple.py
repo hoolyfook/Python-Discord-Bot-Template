@@ -323,6 +323,7 @@ class Couple(commands.Cog, name="couple"):
         aliases=["st", "tangqua", "gift"],
         description="Tặng quà cho đạo lữ của bạn để tăng điểm thân mật"
     )
+    @commands.cooldown(1, 43200, commands.BucketType.user)  # 12 tiếng cooldown
     async def songtu(self, context: Context) -> None:
         """
         Tặng quà cho đạo lữ để tăng điểm thân mật

@@ -40,11 +40,22 @@ class MongoDB:
             upsert=True
         )
     
-    async def get_top_users(self, limit: int = 10):
-        cursor = self.db.users.find().sort([
-            ("cultivation_level", -1),
-            ("cultivation_points", -1)
-        ]).limit(limit)
+    async def get_top_users(self, limit: int = 10, sort_by: str = "cultivation_level"):
+        """
+        Lấy danh sách người dùng được sắp xếp theo tiêu chí
+        
+        :param limit: Số lượng người dùng cần lấy
+        :param sort_by: Tiêu chí sắp xếp (cultivation_level, spirit_stones, mining_attempts)
+        :return: Danh sách người dùng
+        """
+        sort_field = sort_by
+        if sort_by == "cultivation_level":
+            cursor = self.db.users.find().sort([
+                ("cultivation_level", -1),
+                ("cultivation_points", -1)
+            ]).limit(limit)
+        else:
+            cursor = self.db.users.find().sort(sort_field, -1).limit(limit)
         return await cursor.to_list(length=limit)
     
     async def get_role_rewards(self, guild_id: str):
