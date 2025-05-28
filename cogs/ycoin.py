@@ -319,7 +319,7 @@ class SpiritStone(commands.Cog, name="Linh Thạch"):
 
     @commands.hybrid_command(
         name="hoso",
-        aliases=["profile", "info"],
+        aliases=["profile", "info","tuvi"],
         description="Xem hồ sơ tu luyện của bản thân"
     )
     async def hoso(self, context: commands.Context) -> None:

@@ -163,5 +163,51 @@ class Help(commands.Cog, name="Trợ giúp"):
             )
             await context.send(embed=error_embed)
 
+    @commands.hybrid_command(
+        name="canhgioi",
+        description="Hiển thị thông tin về các cảnh giới tu luyện"
+    )
+    async def canhgioi(self, context: Context) -> None:
+        """
+        Hiển thị thông tin về các cảnh giới tu luyện
+        """
+        embed = discord.Embed(
+            title="🌌 Các Cảnh Giới Tu Luyện",
+            description="Danh sách các cảnh giới tu luyện trong thế giới tu tiên",
+            color=0x00FF00
+        )
+
+        realms = [
+            "1️⃣ Phàm Nhân",
+            "2️⃣ Luyện Khí (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "3️⃣ Trúc Cơ (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "4️⃣ Kim Đan (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "5️⃣ Nguyên Anh (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "6️⃣ Hóa Thần (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "7️⃣ Hợp Thể (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "8️⃣ Đại Thừa (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "9️⃣ Tiên Nhân (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "🔟 Kim Tiên (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "1️⃣1️⃣ Đại La Kim Tiên (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "1️⃣2️⃣ Tiên Vương (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "1️⃣3️⃣ Tiên Đế (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)",
+            "1️⃣4️⃣ Đại Đế (Sơ Kỳ, Trung Kỳ, Hậu Kỳ, Đại Viên Mãn)"
+        ]
+
+        embed.add_field(
+            name="📜 Các Cảnh Giới",
+            value="\n".join(realms),
+            inline=False
+        )
+
+        embed.add_field(
+            name="ℹ️ Lưu ý",
+            value="Mỗi cảnh giới (từ Luyện Khí trở đi) đều có 4 giai đoạn:\n- Sơ Kỳ\n- Trung Kỳ\n- Hậu Kỳ\n- Đại Viên Mãn",
+            inline=False
+        )
+
+        embed.set_footer(text=f"SpiritStone Bot | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        await context.send(embed=embed)
+
 async def setup(bot) -> None:
     await bot.add_cog(Help(bot)) 
